@@ -1,0 +1,2290 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#faf8f5" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#121012" media="(prefers-color-scheme: dark)">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Scent Log">
+<link rel="manifest" href="data:application/manifest+json;base64,eyJuYW1lIjogIlNjZW50IExvZyIsICJzaG9ydF9uYW1lIjogIlNjZW50IExvZyIsICJkZXNjcmlwdGlvbiI6ICJUcmFjayBsb25nZXZpdHkgY2hlY2twb2ludHMsIHJhbmsgeW91ciBjb2xsZWN0aW9uLCBhbmQgZ2V0IHJlY29tbWVuZGF0aW9ucy4iLCAic3RhcnRfdXJsIjogIi4iLCAic2NvcGUiOiAiLiIsICJkaXNwbGF5IjogInN0YW5kYWxvbmUiLCAib3JpZW50YXRpb24iOiAicG9ydHJhaXQiLCAiYmFja2dyb3VuZF9jb2xvciI6ICIjMTIxMDEyIiwgInRoZW1lX2NvbG9yIjogIiMxMjEwMTIiLCAiaWNvbnMiOiBbeyJzcmMiOiAiZGF0YTppbWFnZS9wbmc7YmFzZTY0LGlWQk9SdzBLR2dvQUFBQU5TVWhFVWdBQUFNQUFBQURBQ0FZQUFBQlMzR3dIQUFBRUxVbEVRVlI0bk8zZHpWWGJRQUNGMGJFUCszQm9JaVd3U2duMFFVbjBRUWxaVVVLYThDRVZrQVVCalA5bGpUU1MzcjBGWU1GNW44WTJNVm1WaWJtN3ZYdHJmUTBNWi9PNldiVytobTFOTDhiWUthVnRGS00vc05Genl0Z3hqUFpnaGs4WFk0VXcrSU1ZUG4wTUhjSmdYOXp3cVdtb0VLcC9VY05uU0xWRFdOZjhZc2JQMEdwdnJFcE5oazhMTlU2RDNpZUE4ZE5LamUzMUNzRDRhYTN2QnE4T3dQaVppajVidkNvQTQyZHFydDFrNXdDTW42bTZacHVkQWpCK3BxN3JSaThPd1BpWml5NWJ2U2dBNDJkdUx0M3MyUUNNbjdtNlpMdFYveWtFek0zSkFOejltYnR6R3o0YWdQR3pGS2UyN0NrUTBRNEc0TzdQMGh6YnRCT0FhSHNCdVB1elZJZTI3UVFnMnJjQTNQMVp1dDJOT3dHSTlobUF1ejhwdHJmdUJDQ2FBSWkyTHNYVEgvSjhiTjRKUURRQkVFMEFSQk1BMFZaZUFKUE1DVUMwbTlZWHNDUXZUdytqUGRiOTQvTm9qN1ZrVG9CS3hoeC9pOGRiS2dGVTBHcU1JdWhQQUVRVEFORUVRRFFCRUUwQVJCTUEwUVJBTkFFUVRRQkVFd0RSQkVBMEFSQk5BRVFUQU5FRVFEUUJFRTBBRmJUNmVLS1BSZlluZ0VyR0hxUHgxK0hQb2d5czc4Y1dEWDFZVGdDaUNZQm9BaUNhQUlnbUFLSUpnR2dDSUpvQWlDWUFvdmxOOEJGTC9NT3pmcXU4VHdBN2xqajhYVUw0SW9EL0VvYS9Td2hlQTVSU01zZGZTdTczdlUwQVJJc1BJUDB1bVA3OXh3ZEF0dWdBMHU5K0g1Si9EdEVCZ0FDSUpnQ2lDWUJvQWlDYUFJZ21BS0lKZ0dnQ0lKb0FpQ1lBb2dtQWFBSWdtZ0NJSmdDaUNZQm9BaUNhQUlnbUFLSUpnR2dDSUpvQWlIYlQrZ0phK3ZIN1ordExtSVMvdi82MHZvUm1uQUJFRXdEUkJFQTBBUkJOQUVRVEFORUVRRFFCRUUwQVJCTUEwUVJBTkFFUVRRQkVFd0RSQkVBMEFSQk5BRVFUQU5HaVB4S1ovRkZBM2prQmlDWUFvZ21BYUFJZ21nQ0lKZ0NpQ1lCb0FpQ2FBSWdtQUtJSmdHZ0NJSm9BaUNZQW9nbUFhQUlnbWdDSUZoM0EvZU56NjB1WWhPU2ZRM1FBRUI5QTh0MnZGTjkvZkFCa0UwREp2UXVtZnQvYlZuZTNkMit0TDJKS1hwNGVXbC9DNEF6L2l3Q09XR0lJaHI5UEFFVHpHb0JvQWlDYUFJZ21BS0lKZ0dnQ0lKb0FpQ1lBb2dtQWFBSWdtZ0NJSmdDaXJUZXZtMVhyaTRBV05xK2JsUk9BYUFJZ21nQ0lKZ0NpclV0NWZ6SFEra0pnVEIrYmR3SVFUUUJFK3d6QTB5QlNiRy9kQ1VDMGJ3RTRCVmk2M1kwN0FZaTJGNEJUZ0tVNnRHMG5BTkVPQnVBVVlHbU9iZG9KUUxTakFUZ0ZXSXBUV3o1NUFvaUF1VHUzWVUrQmlIWTJBS2NBYzNYSmRpODZBVVRBM0Z5NjJZdWZBb21BdWVpeTFVNnZBVVRBMUhYZGFPY1h3U0pncXE3WjVsWHZBb21BcWJsMmsxZS9EU29DcHFMUEZudjlIa0FFdE5aM2c3MS9FU1lDV3FteHZhcmo5Wjl1TTRhYU45MnEveFRDYWNEUWFtOXNzTUU2RGFocHFKdnI0SGRzSWRESDBNOHFSbnZLSWdTNkdPdnA5T2pQMllYQUtXTy9qbXo2b2xVTWxOTDJ6WlBKdldzamltV2IyanVGL3dDRVhneTRSSUJhdUFBQUFBQkpSVTVFcmtKZ2dnPT0iLCAic2l6ZXMiOiAiMTkyeDE5MiIsICJ0eXBlIjogImltYWdlL3BuZyIsICJwdXJwb3NlIjogImFueSBtYXNrYWJsZSJ9LCB7InNyYyI6ICJkYXRhOmltYWdlL3BuZztiYXNlNjQsaVZCT1J3MEtHZ29BQUFBTlNVaEVVZ0FBQWdBQUFBSUFDQVlBQUFEMGVOVDZBQUFOcEVsRVFWUjRuTzNjMjNFYlNSWkYwYUppREdEQUdWa2hDOFlCR2RER3lBK2EwRi95WUt4Z3lBUE9oNExka0VTQ0tLRHljZk9zWlVFaGllRFpTRkI2MkpqUzZmSDBNdm9aQUk3dy9PUDVZZlF6OENjL2xFRU1QTUJQQW1FTWg5NkJzUWZZUnhTMDU0QWJNUGdBeHhJRXgzT2dCekQ0QUgwSmd2czV3QnNaZllBNWlJSGJPTFFkakQ3QTNNVEE5UnpVQjR3K1FFMWk0REtIOHc3REQ3QUdJZkEyaDNMRzZBT3NUUXo4eTBGc2hoOGdqUkFJRHdEREQ1QXRPUVFpWDdqaEIrQmNZZ2hFdldEREQ4QWxTU0VROFVJTlB3QjdKSVRBcDlFUDBKcnhCMkN2aE8xWXRuQVNmbmdBdExmcWJjQnlMOHJ3QTlEQ2FpR3cxRmNBeGgrQVZsYmJtQ1ZxWnJVZkNnQnpXK0Uyb1B3TmdQRUhvTGNWdHFkMEFLendBd0NncHVvYlZQSUtvL3FoQTdDV2lsOEpsTHNCTVA0QXpLYmlOcFVLZ0lvSERFQ0dhaHRWNHNxaTJxRUNrSzNDVndMVDN3QVlmd0NxcWJCZFV3ZEFoUU1FZ0xmTXZtSFRCc0RzQndjQUg1bDV5NllNZ0prUERBRDJtSFhUcGd1QVdROEtBRzQxNDdaTkZRQXpIaEFBSEdHMmpac21BR1k3R0FBNDJreGJOMFVBekhRZ0FORFNMSnMzUEFCbU9RZ0E2R1dHN1JzYUFETWNBQUNNTUhvRGh3WEE2QmNPQUtPTjNNSWhBV0Q4QWVDblVadllQUUNNUHdEOGFzUTJkZzBBNHc4QWIrdTlrZDBDd1BnRHdHVTl0N0pMQUJoL0FMaE9yODBjL3Y4QUFBRDlOUThBbi80QllKOGUyOWswQUl3L0FOeW05WVkyQ3dEakR3RDNhYm1sL2dZQUFBSTFDUUNmL2dIZ0dLMDI5ZkFBTVA0QWNLd1cyM3BvQUJoL0FHamo2STMxTndBQUVPaXdBUERwSHdEYU9uSnJEd2tBNHc4QWZSeTF1YjRDQUlCQWR3ZUFULzhBME5jUjIrc0dBQUFDM1JVQVB2MER3QmozYnZETkFXRDhBV0NzZTdiWVZ3QUFFT2ltQVBEcEh3RG1jT3NtdXdFQWdFQzdBOENuZndDWXl5M2I3QVlBQUFMdENnQ2YvZ0ZnVG5zMzJnMEFBQVM2T2dCOCtnZUF1ZTNaYWpjQUFCRG9xZ0R3NlI4QWFyaDJzOTBBQUVBZ0FRQUFnVDRNQU5mL0FGRExOZHZ0QmdBQUFsME1BSi8rQWFDbWp6YmNEUUFBQkJJQUFCRG8zUUJ3L1E4QXRWM2FjamNBQUJCSUFBQkFvRGNEd1BVL0FLemh2VTEzQXdBQWdRUUFBQVQ2SXdCYy93UEFXdDdhZGpjQUFCQklBQUJBSUFFQUFJRitDUURmL3dQQW1uN2ZlRGNBQUJCSUFBQkFJQUVBQUlIK0NRRGYvd1BBMnM2MzNnMEFBQVFTQUFBUVNBQUFRQ0FCQUFDQlBtMmJQd0FFZ0JTdm0rOEdBQUFDQ1FBQUNDUUFBQ0NRQUFDQVFBSUFBQUlKQUFBSUpBQUFJTkNEL3dNQSt2dis3Y3ZvUjVqTzU2OVBveDhCb2dnQTZNandmMHdJUUIrK0FvQk9qUDkxbkJQMElRQ2dBNk8yai9PQzlnUUFOR2JNYnVQY29DMEJBQTBac2ZzNFAyaEhBQUJBSUFFQWpmajBlZ3puQ0cwSUFBQUlKQUFBSUpBQUFJQkFBZ0FBQWdrQUFBZ2tBQUFna0FBQWdFQUNBQUFDQ1FBQUNDUUFBQ0NRQUFDQVFBSUFBQUlKQUFBSUpBQUFJSkFBQUlCQUFnQUFBZ2tBQUFna0FBQWdrQUFBZ0VBQ0FBQUNDUUFBQ0NRQUFDQ1FBQUNBUUFJQUFBSUpBQUFJSkFBQUlKQUFBSUJBQWdBQUFna0FBQWdrQUFBZ2tBQUFnRUFDQUFBQ0NRQUFDQ1FBQUNDUUFBQ0FRQUlBQUFJSkFBQUlKQUFBSUpBQWdFWStmMzBhL1FoTGNJN1FoZ0FBZ0VBQ0FCcnk2ZlUremcvYUVRRFFtQkc3alhPRHRnUUFkR0RNOW5GZTBKNEFnRTZNMm5XY0UvVHhjSG84dll4K0NFanovZHVYMFk4d0hjTVBmUWtBS0tKS05CaHlxTUZYQUFBUVNBQUFRQ0FCQUFDQkJBQUFCQklBQUJCSUFBQkFJQUVBQUlFRUFBQUVFZ0FBRUVnQUFFQWdBUUFBZ1FRQUFBUVNBQUFRU0FBQVFDQUJBQUNCQkFBQUJCSUFBQkJJQUFCQUlBRUFBSUVFQUFBRUVnQUFFRWdBQUVBZ0FRQUFnUVFBQUFRU0FBQVFTQUFBUUNBQkFBQ0JCQUFBQkhvNFBaNWVSajhFOVBiOTI1ZlJqOEJrUG45OUd2MEkwSlVBSUlMQlp5OUJ3T29FQUVzei9OeExDTEFxQWNDU0REOUhFd0tzUmdDd0ZNTlBhMEtBVmZoWEFDekQrTk9EOXhtckVBQXN3UzlsZXZKK1l3VUNnUEw4TW1ZRTd6dXFFd0NVNXBjd0kzbi9VWmtBb0N5L2ZKbUI5eUZWQ1FCSzhrdVhtWGcvVXBFQW9CeS9iSm1SOXlYVkNBQUFDQ1FBS01XbkxHYm0vVWtsQWdBQUFna0F5dkRwaWdxOFQ2bENBQUJBSUFGQUNUNVZVWW4zS3hVSUFBQUlKQUFBSUpBQUFJQkFBb0RwK1Q2VmlyeHZtWjBBQUlCQUFnQUFBZ2tBQUFna0FBQWdrQUFBZ0VBQ0FBQUNDUUFBQ0NRQUFDQ1FBQUNBUUFJQUFBSUpBQUFJSkFBQUlKQUFBSUJBQWdBQUFna0FBQWdrQUFBZ2tBQUFnRUFDQUFBQ0NRQUFDQ1FBQUNDUUFBQ0FRQUlBQUFJSkFBQUlKQUFBSUpBQUFJQkFBZ0FBQWdrQUFBZ2tBQUFna0FBQWdFQUNBQUFDQ1FBQUNDUUFBQ0NRQUFDQVFBSUFBQUlKQUFBSUpBQUFJSkFBQUlCQUFnQUFBZ2tBQUFna0FBQWdrQUFBZ0VBQ0FBQUNDUUFBQ0NRQUFDQ1FBQUNBUUFJQUFBSUpBQUFJSkFBQUlKQUFBSUJBQWdBQUFna0FBQWdrQUFBZ2tBQUFnRUFDQUFBQ0NRQUFDQ1FBQUNDUUFBQ0FRQUlBQUFJSkFBQUlKQUFBSU5CL1JqOEFYUEsvLy82MWJYK1BmZ3E0MWRQb0I0QjN1UUVBZ0VBQ0FBQUNDUUFBQ0NRQUFDQ1FBQUNBUUFJQUFBSUpBQUFJSkFBQUlKQUFBSUJBQWdBQUFna0FBQWdrQUFBZ2tBQUFnRUFDQUFBQ0NRQUFDQ1FBQUNDUUFBQ0FRQUlBQUFJSkFBQUlKQUFBSUpBQUFJQkFBZ0FBQWdrQUFBZ2tBQUFna0FBQWdFQUNBQUFDQ1FBQUNDUUFBQ0NRQUFDQVFBSUFBQUlKQUFBSUpBQUFJSkFBQUlCQUFnQUFBZ2tBQUFna0FBQWdrQUFBZ0VBQ0FBQUNDUUFBQ0NRQUFDQ1FBQUNBUUFJQUFBSUpBQUFJSkFBQUlKQUFBSUJBQWdBQUFqMmNIazh2b3g4Q0x2bis3Y3ZvUjRDYmZQNzZOUG9SNEYxdUFBQWdrQUFBZ0VBQ0FBQUNDUUFBQ0NRQUFDQ1FBQUNBUUFJQUFBSUpBQUFJSkFBQUlKQUFBSUJBQWdBQUFna0FBQWdrQUFBZ2tBQUFnRUFDQUFBQ0NRQUFDQ1FBQUNDUUFBQ0FRQUlBQUFJSkFBQUlKQUFBSUpBQUFJQkFBZ0FBQWdrQUFBZ2tBQUFna0FBQWdFQUNBQUFDQ1FBQUNDUUFBQ0NRQUFDQVFBSUFBQUlKQUFBSUpBQUFJSkFBQUlCQUFnQUFBZ2tBQUFna0FBQWdrQUFBZ0VBQ0FBQUNDUUFBQ0NRQUFDQ1FBQUNBUUFJQUFBSUpBQUFJSkFBQUlKQUFZSHFmdno2TmZnVFl6ZnVXMlFrQUFBZ2tBQUFna0FBQWdFQUNnQko4bjBvbDNxOVVJQUFBSUpBQW9BeWZxcWpBKzVRcUJBQUFCQklBbE9MVEZUUHovcVFTQVFBQWdRUUE1ZmlVeFl5OEw2bEdBRkNTWDdiTXhQdVJpZ1FBWmZtbHl3eThENmxLQUZDYVg3Nk01UDFIWlFLQTh2d1NaZ1R2TzZvVEFDekJMMk42OG41akJRS0FaZmlsVEEvZVo2emk0ZlI0ZWhuOUVIQzA3OSsrakg0RUZtUDRXWTBBWUdsQ2dIc1pmbFlsQUlnZ0JOakw4TE02QVVBa1FjRHZERDVwQkFBQUJQS3ZBQUFna0FBQWdFQUNBQUFDQ1FBQUNDUUFBQ0NRQUFDQVFBSUFBQUlKQUFBSUpBQUFJSkFBQUlCQUFnQUFBZ2tBQUFna0FBQWdrQUFBZ0VBQ0FBQUNDUUFBQ0NRQUFDQ1FBQUNBUUFJQUFBSUpBQUFJSkFBQUlKQUFBSUJBQWdBQUFna0FBQWdrQUFBZ2tBQUFnRUFDQUFBQ0NRQUFDQ1FBQUNEUXArY2Z6dytqSHdJQTZPZjV4L09ER3dBQUNDUUFBQ0NRQUFDQVFBSUFBQUlKQUFBSUpBQUFJSkFBQUlCQW43YnQ1NzhISFAwZ0FFQjdyNXZ2QmdBQUFna0FBQWdrQUFBZ2tBQUFnRUQvQklBL0JBU0F0WjF2dlJzQUFBZ2tBQUFna0FBQWdFQy9CSUMvQXdDQU5mMis4VzRBQUNDUUFBQ0FRQUlBQUFMOUVRRCtEZ0FBMXZMV3Ryc0JBSUJBQWdBQUFyMFpBTDRHQUlBMXZMZnBiZ0FBSUpBQUFJQkE3d2FBcndFQW9MWkxXKzRHQUFBQ0NRQUFDSFF4QUh3TkFBQTFmYlRoYmdBQUlOQ0hBZUFXQUFCcXVXYTczUUFBUUNBQkFBQ0JyZ29BWHdNQVFBM1hiclliQUFBSWRIVUF1QVVBZ0xudDJXbzNBQUFRYUZjQXVBVUFnRG50M1dnM0FBQVFhSGNBdUFVQWdMbmNzczF1QUFBZzBFMEI0QllBQU9adzZ5YTdBUUNBUURjSGdGc0FBQmpybmkyKzZ3WkFCQURBR1BkdXNLOEFBQ0RRM1FIZ0ZnQUEranBpZTkwQUFFQ2dRd0xBTFFBQTlISFU1aDUyQXlBQ0FLQ3RJN2ZXVndBQUVPalFBSEFMQUFCdEhMMnhoOThBaUFBQU9GYUxiVzN5RllBSUFJQmp0TnBVZndNQUFJR2FCWUJiQUFDNFQ4c3RiWG9ESUFJQTREYXRON1Q1VndBaUFBRDI2YkdkL2dZQUFBSjFDUUMzQUFCd25WNmIyZTBHUUFRQXdHVTl0N0xyVndBaUFBRGUxbnNqdS84TmdBZ0FnRitOMk1ZaGZ3UW9BZ0RncDFHYk9PeGZBWWdBQU5LTjNNS2gvd3hRQkFDUWF2UUdEdjkvQUVZZkFBRDBOc1AyRFErQWJadmpJQUNnaDFrMmI0b0EyTFo1RGdRQVdwbHA2NllKZ0cyYjYyQUE0RWl6YmR4VUFiQnQ4eDBRQU54cnhtMmJMZ0MyYmM2REFvQmJ6THBwVXdiQXRzMTdZQUJ3clptM2JOb0EyTGE1RHc0QUxwbDl3NllPZ0cyYi93QUI0SGNWdG12NkJ6eDNlank5akg0R0FIaFBoZUYvTmYwTndMbEtCd3RBbG1vYlZTb0F0cTNlQVFPd3ZvcmJWTzZCei9sS0FJQ1JLZzcvcTNJM0FPY3FIendBdFZYZm9OSUJzRzMxZndBQTFMUEM5cFIvQWVkOEpRQkFTeXNNLzZ2eU53RG5WdnJCQURDWDFUWm1xUmR6em0wQUFFZFliZmhmTGZtaXpna0JBRzZ4NnZDL1d1b3JnTGVzL2dNRTRIZ0oyN0g4Q3p6bk5nQ0FTeEtHLzFYTUN6MG5CQUE0bHpUOHIrSmU4RGtoQUpBdGNmaGZ4Yjd3YzBJQUlFdnk4TCtLUDRCelFnQmdiWWIvWHc3aUhXSUFZQTFHLzIwTzVRTkNBS0FtdzMrWnc5bEJEQURNemVoZnowSGRTQXdBek1IbzM4YWhIVUFNQVBSbDlPL25BQnNRQkFESE12akhjNkFkQ0FLQWZReCtldzU0RUZFQThKT3hIOE9oVDBvZ0FLc3c4SFA2UDRuOHRKL1d6U09KQUFBQUFFbEZUa1N1UW1DQyIsICJzaXplcyI6ICI1MTJ4NTEyIiwgInR5cGUiOiAiaW1hZ2UvcG5nIiwgInB1cnBvc2UiOiAiYW55IG1hc2thYmxlIn1dfQ==">
+<link rel="apple-touch-icon" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAALQAAAC0CAYAAAA9zQYyAAAD4klEQVR4nO3dzVEUURiF4R7KvRZJGIIrQyAPQyIPQnBFCCYxhRHgQocCHKB/bvftOd/zBMDcrno5XphRD8MOXH+5fux9BpY7PhwPvc/Q5QACrqFH4Ju9oIhr2yruVV9ExJyzZtyrfGEhM8YaYV+1/oJiZqw1Wmn2HSJklmi11k0WWsws1aqhRd8VQmYNS9Z69kKLmbUsaWtW0GJmbXMbmxy0mNnKnNYmBS1mtja1udFBi5leprQ3Kmgx09vYBj8MWszsxZgWm7/1DT29G7R1Zm8+avLNoMXMXr3XpisHUc4GbZ3Zu7ca/S9oMXMpzrXqykGUF0FbZy7N62YtNFEETZSnoF03uFTP27XQRBE0Ua6GwXWDy3dq2EITRdBEETRRDu7PJLHQRBE0UT71PsClur+9Wf01vv24W/010ljoGbaIecvXSSLoibaOTNTTCJoogiaKoIkiaKIImiiCJoqgiSJoogiaKIImiqCJImiiCJoogiaKoCfa+kP3PuQ/jaBn2CoyMU/nb303svSD+OJtw0ITRdBEETRRBE0UQRNF0EQRNFEETRRBE8U7hf8k/JNb3m0UdETIr1UOu2zQiSG/VjHsknfoCjEPQ53nfK5k0OQqF3S11ar2vOWCJlupoKut1Uml5y4VNPkETRRBE0XQRBE0UQRNFEETRdBEETRRBE0UQRNF0EQRNFEETRRBE0XQRBE0UQRNFEETRdBE+dT7AFv6/PNr7yN08fv7r95H2IyFJoqgiSJoogiaKIImiqCJImiiCJoogiaKoIkiaKIImiiCJoqgiSJoogiaKKU+4F/pg+5VWWiiCJoogiaKoIkiaKIImiiCJoqgiSJoogiaKIImiqCJImiiCJoogiaKoIlSKuhvP+56H6GLSs9dKmjylQu60loNQ73nLRc02UoGXWW1qjznc4frL9ePvQ/R0/3tTe8jNFcx5JPyQZ8khF055BNBE6XkHZpcgiaKoIkiaKIImiiCJoqgiSJoogiaKIImiqCJImiiXB0fjofeh4AWjg/Hg4UmiqCJImiiXA3D37tH74PAEqeGLTRRBE2Up6BdO7hUz9u10EQRNFFeBO3awaV53ayFJsp/QVtpLsW5Vs8utKjZu7cadeUgyptBW2n26r02311oUbM3HzXpykGUD4O20uzFmBZHLbSo6W1sg6OvHKKmlyntTbpDi5qtTW1u8g+FomYrc1qb9VsOUbO2uY3N/rWdqFnLkraaROl/0qKFFiPZ5I0Va81SrRpqHqK1ZorWY9j8rW9rzVhrtLJqfNaac9Ycvc3WVNy1bfUnd5frgbhr6HH93MV9V+AZ9vDz0x8cmfyTWpHtDgAAAABJRU5ErkJggg==">
+<link rel="icon" type="image/png" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAALQAAAC0CAYAAAA9zQYyAAAD4klEQVR4nO3dzVEUURiF4R7KvRZJGIIrQyAPQyIPQnBFCCYxhRHgQocCHKB/bvftOd/zBMDcrno5XphRD8MOXH+5fux9BpY7PhwPvc/Q5QACrqFH4Ju9oIhr2yruVV9ExJyzZtyrfGEhM8YaYV+1/oJiZqw1Wmn2HSJklmi11k0WWsws1aqhRd8VQmYNS9Z69kKLmbUsaWtW0GJmbXMbmxy0mNnKnNYmBS1mtja1udFBi5leprQ3Kmgx09vYBj8MWszsxZgWm7/1DT29G7R1Zm8+avLNoMXMXr3XpisHUc4GbZ3Zu7ca/S9oMXMpzrXqykGUF0FbZy7N62YtNFEETZSnoF03uFTP27XQRBE0Ua6GwXWDy3dq2EITRdBEETRRDu7PJLHQRBE0UT71PsClur+9Wf01vv24W/010ljoGbaIecvXSSLoibaOTNTTCJoogiaKoIkiaKIImiiCJoqgiSJoogiaKIImiqCJImiiCJoogiaKoCfa+kP3PuQ/jaBn2CoyMU/nb303svSD+OJtw0ITRdBEETRRBE0UQRNF0EQRNFEETRRBE8U7hf8k/JNb3m0UdETIr1UOu2zQiSG/VjHsknfoCjEPQ53nfK5k0OQqF3S11ar2vOWCJlupoKut1Uml5y4VNPkETRRBE0XQRBE0UQRNFEETRdBEETRRBE0UQRNF0EQRNFEETRRBE0XQRBE0UQRNFEETRdBE+dT7AFv6/PNr7yN08fv7r95H2IyFJoqgiSJoogiaKIImiqCJImiiCJoogiaKoIkiaKIImiiCJoqgiSJoogiaKKU+4F/pg+5VWWiiCJoogiaKoIkiaKIImiiCJoqgiSJoogiaKIImiqCJImiiCJoogiaKoIlSKuhvP+56H6GLSs9dKmjylQu60loNQ73nLRc02UoGXWW1qjznc4frL9ePvQ/R0/3tTe8jNFcx5JPyQZ8khF055BNBE6XkHZpcgiaKoIkiaKIImiiCJoqgiSJoogiaKIImiqCJImiiXB0fjofeh4AWjg/Hg4UmiqCJImiiXA3D37tH74PAEqeGLTRRBE2Up6BdO7hUz9u10EQRNFFeBO3awaV53ayFJsp/QVtpLsW5Vs8utKjZu7cadeUgyptBW2n26r02311oUbM3HzXpykGUD4O20uzFmBZHLbSo6W1sg6OvHKKmlyntTbpDi5qtTW1u8g+FomYrc1qb9VsOUbO2uY3N/rWdqFnLkraaROl/0qKFFiPZ5I0Va81SrRpqHqK1ZorWY9j8rW9rzVhrtLJqfNaac9Ycvc3WVNy1bfUnd5frgbhr6HH93MV9V+AZ9vDz0x8cmfyTWpHtDgAAAABJRU5ErkJggg==">
+<title>Scent Log</title>
+<style>
+  :root {
+    /* Dark is the default palette; light overrides follow below.
+       Colors are not a straight inversion — gold/wine/sage are
+       deepened for light mode so they still meet WCAG AA on white,
+       and on-gold/on-wine flip per-accent rather than sharing one
+       on-accent, since a fill dark enough to work as light-mode text
+       is too dark for dark-on-fill button text. See PRD §2.4. */
+    --bg: #121012;
+    --card: #1b1817;
+    --field: #221e1d;
+    --ink: #f2ece5;
+    --ink-soft: #a89c92;
+    --ink-faint: #6f6560;
+    --line: #322c29;
+    --gold: #dba85f;
+    --gold-soft: rgba(219,168,95,0.16);
+    --wine: #ea6b86;
+    --wine-soft: rgba(234,107,134,0.14);
+    --sage: #93ab84;
+    --sage-soft: rgba(147,171,132,0.14);
+    --danger: #ec7266;
+    --on-gold: #1b0f10;
+    --on-wine: #1b0f10;
+    --gold-border: rgba(219,168,95,0.4);
+    --wine-border: rgba(234,107,134,0.5);
+    --focus-ring: rgba(219,168,95,0.18);
+    --ink-tint: rgba(242,236,229,0.08);
+    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', Roboto, sans-serif;
+  }
+  @media (prefers-color-scheme: light) {
+    :root {
+      --bg: #faf8f5;
+      --card: #ffffff;
+      --field: #f2eee9;
+      --ink: #211c19;
+      --ink-soft: #6b5f58;
+      --ink-faint: #756a62;
+      --line: #9c8d7c;
+      --gold: #8a5a1c;
+      --gold-soft: rgba(138,90,28,0.16);
+      --wine: #a52f52;
+      --wine-soft: rgba(165,47,82,0.12);
+      --sage: #4f7a4a;
+      --sage-soft: rgba(79,122,74,0.14);
+      --danger: #b3392a;
+      --on-gold: #fffaf2;
+      --on-wine: #ffffff;
+      --gold-border: rgba(138,90,28,0.7);
+      --wine-border: rgba(165,47,82,0.7);
+      --focus-ring: rgba(138,90,28,0.18);
+      --ink-tint: rgba(33,28,25,0.06);
+    }
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html {
+    background: var(--bg);
+  }
+  body {
+    margin: 0;
+    min-height: 100vh;
+    background: var(--bg);
+    color: var(--ink);
+    padding: 20px 16px 70px;
+  }
+  h1 {
+    font-size: 24px;
+    font-weight: 700;
+    letter-spacing: -0.3px;
+    margin: 0 0 3px;
+    color: var(--ink);
+  }
+  .sub {
+    font-size: 13px;
+    color: var(--ink-soft);
+    margin: 0 0 20px;
+  }
+  .panel {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    padding: 16px;
+    margin-bottom: 16px;
+  }
+  label {
+    display: block;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    color: var(--ink-faint);
+    margin: 12px 0 5px;
+  }
+  label:first-child { margin-top: 0; }
+  input, select, textarea {
+    width: 100%;
+    padding: 11px 12px;
+    border: 1px solid var(--line);
+    border-radius: 9px;
+    background: var(--field);
+    color: var(--ink);
+    font-size: 15px;
+    font-family: inherit;
+  }
+  input::placeholder, textarea::placeholder { color: var(--ink-faint); }
+  select { -webkit-appearance: none; appearance: none; }
+  input:focus, select:focus, textarea:focus {
+    outline: none;
+    border-color: var(--gold);
+    box-shadow: 0 0 0 3px var(--focus-ring);
+  }
+  .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  textarea { resize: vertical; min-height: 44px; }
+  .checkpoints { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; }
+  button {
+    font-family: inherit;
+    font-size: 13.5px;
+    font-weight: 600;
+    border-radius: 9px;
+    border: 1px solid var(--line);
+    background: var(--field);
+    color: var(--ink);
+    padding: 10px 14px;
+    cursor: pointer;
+  }
+  button:active { transform: scale(0.98); }
+  .btn-primary {
+    width: 100%;
+    margin-top: 16px;
+    background: var(--wine);
+    color: var(--on-wine);
+    border: none;
+    padding: 13px;
+    font-size: 15px;
+    font-weight: 700;
+  }
+  .btn-primary:active { opacity: 0.9; }
+  .err {
+    color: var(--danger);
+    font-size: 12px;
+    margin-top: 4px;
+    display: none;
+  }
+  .entry {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-left: 3px solid var(--ink-faint);
+    border-radius: 10px 14px 14px 10px;
+    padding: 14px 16px;
+    margin-bottom: 10px;
+  }
+  .entry.longevity-fast { border-left-color: var(--ink-faint); }
+  .entry.longevity-moderate { border-left-color: var(--gold); }
+  .entry.longevity-long { border-left-color: var(--wine); }
+  .entry.longevity-allday { border-left-color: var(--sage); }
+  .longevity-dot {
+    display: inline-block;
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    margin-right: 5px;
+    vertical-align: middle;
+  }
+  .longevity-dot.longevity-fast { background: var(--ink-faint); }
+  .longevity-dot.longevity-moderate { background: var(--gold); }
+  .longevity-dot.longevity-long { background: var(--wine); }
+  .longevity-dot.longevity-allday { background: var(--sage); }
+  .entry-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 8px;
+  }
+  .entry-name { font-size: 16.5px; font-weight: 700; color: var(--ink); }
+  .entry-house { font-size: 12.5px; color: var(--ink-soft); }
+  .badge {
+    font-size: 11px;
+    font-weight: 700;
+    padding: 4px 10px;
+    border-radius: 20px;
+    white-space: nowrap;
+    background: var(--wine-soft);
+    color: var(--wine);
+  }
+  .entry-meta {
+    font-size: 12px;
+    color: var(--ink-soft);
+    margin: 6px 0 8px;
+  }
+  .cp-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 6px 10px;
+    font-size: 12.5px;
+    margin: 8px 0;
+  }
+  .cp-grid div span { color: var(--ink-faint); }
+  .entry-notes {
+    font-size: 13.5px;
+    line-height: 1.5;
+    margin-top: 6px;
+    white-space: pre-wrap;
+    color: var(--ink-soft);
+  }
+  .del {
+    font-size: 11.5px;
+    font-weight: 600;
+    color: var(--ink-soft);
+    background: none;
+    border: none;
+    padding: 0;
+    text-decoration: underline;
+    margin-top: 8px;
+  }
+  .empty {
+    text-align: center;
+    padding: 30px 10px;
+    color: var(--ink-faint);
+    font-size: 13.5px;
+  }
+  .wishlist-item {
+    background: var(--card);
+    border: 1px dashed var(--gold-border);
+    border-radius: 14px;
+    padding: 12px 16px;
+    margin-bottom: 8px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px;
+  }
+  .wishlist-name { font-size: 15px; font-weight: 700; color: var(--ink); }
+  .wishlist-note { font-size: 12px; color: var(--ink-soft); margin-top: 2px; }
+  .wl-add-row { display: flex; gap: 8px; margin-bottom: 12px; }
+  .wl-add-row input { flex: 1; }
+  .section-label {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    color: var(--ink-faint);
+    margin: 0 0 10px;
+  }
+  .section-header {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    margin: 28px 0 14px;
+  }
+  .section-header:first-of-type { margin-top: 0; }
+  .section-icon {
+    flex-shrink: 0;
+    width: 30px;
+    height: 30px;
+    border-radius: 9px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .section-icon svg { width: 16px; height: 16px; }
+  .section-heading { flex: 1; min-width: 0; }
+  .section-title {
+    font-size: 15.5px;
+    font-weight: 700;
+    color: var(--ink);
+    margin: 0;
+    letter-spacing: -0.1px;
+  }
+  .section-sub {
+    font-size: 12px;
+    color: var(--ink-soft);
+    margin: 2px 0 0;
+  }
+  .section-icon.icon-profile { background: var(--gold-soft); color: var(--gold); }
+  .section-icon.icon-collection { background: var(--wine-soft); color: var(--wine); }
+  .section-icon.icon-recommend { background: var(--sage-soft); color: var(--sage); }
+  .section-icon.icon-log { background: var(--ink-tint); color: var(--ink); }
+  .section-icon.icon-wishlist { background: var(--gold-soft); color: var(--gold); }
+  .section-icon.icon-tested { background: var(--ink-tint); color: var(--ink-soft); }
+  .section-icon.icon-data { background: var(--sage-soft); color: var(--sage); }
+  .section-divider {
+    border: none;
+    border-top: 1px solid var(--line);
+    margin: 30px 0 0;
+  }
+  .collection-item {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    padding: 14px 16px 14px 12px;
+    margin-bottom: 10px;
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+  }
+  .rank-number {
+    flex-shrink: 0;
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    font-weight: 700;
+    background: var(--wine-soft);
+    color: var(--wine);
+    margin-top: 2px;
+  }
+  .rank-number.rank-1 { background: var(--gold); color: var(--on-gold); }
+  .collection-body { flex: 1; min-width: 0; }
+  .collection-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px;
+  }
+  .collection-name { font-size: 15.5px; font-weight: 700; color: var(--ink); }
+  .rank-badge {
+    font-size: 11px;
+    font-weight: 700;
+    padding: 4px 11px;
+    border-radius: 20px;
+    white-space: nowrap;
+    background: var(--gold);
+    color: var(--on-gold);
+  }
+  .gravitate-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 10px;
+  }
+  .gravitate-row input[type="range"] { flex: 1; accent-color: var(--gold); }
+  .gravitate-label {
+    font-size: 12px;
+    color: var(--ink-soft);
+    min-width: 70px;
+  }
+  .collection-name-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    cursor: pointer;
+  }
+  .collection-chevron {
+    font-size: 11px;
+    color: var(--ink-faint);
+    transition: transform 0.15s ease;
+    flex-shrink: 0;
+  }
+  .collection-chevron.open { transform: rotate(90deg); }
+  .collection-notes {
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px solid var(--line);
+  }
+  .collection-notes .cp-grid { margin: 0 0 8px; }
+  .collection-notes-empty {
+    font-size: 12.5px;
+    color: var(--ink-faint);
+    margin: 0;
+  }
+  .profile-panel {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    padding: 16px;
+    margin-bottom: 16px;
+  }
+  .profile-row { margin-bottom: 14px; }
+  .profile-row:last-child { margin-bottom: 0; }
+  .profile-row-label {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    color: var(--ink-faint);
+    margin: 0 0 8px;
+  }
+  .profile-tags { display: flex; flex-wrap: wrap; gap: 6px; }
+  .profile-tag {
+    font-size: 12.5px;
+    font-weight: 600;
+    padding: 5px 11px;
+    border-radius: 20px;
+    background: var(--field);
+    border: 1px solid var(--line);
+    color: var(--ink);
+  }
+  .profile-tag.top-tag { border-color: var(--gold-border); color: var(--gold); }
+  .profile-tag.heart-tag { border-color: var(--wine-border); color: var(--wine); }
+  .profile-tag.base-tag { color: var(--ink); }
+  .autofill-note {
+    font-size: 11.5px;
+    color: var(--gold);
+    margin: 5px 0 0;
+  }
+  .ac-wrap { position: relative; flex: 1; }
+  .ac-dropdown {
+    position: absolute;
+    top: calc(100% + 4px);
+    left: 0;
+    right: 0;
+    background: var(--field);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    overflow: hidden;
+    z-index: 20;
+    max-height: 240px;
+    overflow-y: auto;
+  }
+  .ac-item {
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--line);
+    cursor: pointer;
+  }
+  .ac-item:last-child { border-bottom: none; }
+  .ac-item:active { background: var(--card); }
+  .ac-name { font-size: 14px; font-weight: 600; color: var(--ink); }
+  .ac-house { font-size: 11.5px; color: var(--ink-soft); margin-top: 1px; }
+  .chk-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 14px;
+    font-size: 12.5px;
+    color: var(--ink-soft);
+  }
+  .chk-row input[type="checkbox"] { width: auto; accent-color: var(--wine); }
+  .toggle-form {
+    width: 100%;
+    background: var(--wine);
+    color: var(--on-wine);
+    border: none;
+    padding: 14px;
+    border-radius: 12px;
+    font-size: 15px;
+    font-weight: 700;
+    margin-bottom: 16px;
+  }
+  .banner {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    background: var(--sage-soft);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 12px 14px;
+    margin-bottom: 18px;
+  }
+  .banner-body { flex: 1; min-width: 0; }
+  .banner-title { font-weight: 700; margin: 0 0 3px; color: var(--sage); font-size: 12.5px; }
+  .banner-text { margin: 0; color: var(--ink-soft); font-size: 12.5px; line-height: 1.5; }
+  .banner-dismiss {
+    flex-shrink: 0;
+    background: none;
+    border: none;
+    padding: 2px 4px;
+    font-size: 16px;
+    line-height: 1;
+    color: var(--ink-faint);
+    cursor: pointer;
+  }
+  .data-actions { display: flex; gap: 10px; }
+  .data-actions button { flex: 1; }
+  .data-meta { font-size: 12px; color: var(--ink-soft); margin: 12px 0 0; line-height: 1.5; }
+  .reminder {
+    margin-top: 14px;
+    padding-top: 14px;
+    border-top: 1px solid var(--line);
+    font-size: 12.5px;
+    color: var(--ink-soft);
+    line-height: 1.5;
+  }
+  .reminder button {
+    margin-top: 8px;
+    width: 100%;
+    background: var(--sage-soft);
+    border-color: var(--line);
+    color: var(--sage);
+    font-weight: 700;
+  }
+  .import-err {
+    color: var(--danger);
+    font-size: 12px;
+    margin-top: 10px;
+    display: none;
+  }
+  .hide { display: none; }
+</style>
+</head>
+<body>
+
+<h1>Scent log</h1>
+<p class="sub">Track longevity checkpoints across your bottles.</p>
+
+<div class="banner hide" id="storageBanner">
+  <div class="banner-body">
+    <p class="banner-title">Your data lives on this device only</p>
+    <p class="banner-text" id="storageBannerText">There's no account and no server. Clearing your browser data or switching devices will erase everything unless you export a backup first.</p>
+  </div>
+  <button class="banner-dismiss" id="storageBannerDismiss" aria-label="Dismiss">&times;</button>
+</div>
+
+<div class="section-header">
+  <div class="section-icon icon-profile">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4.5"/><circle cx="12" cy="12" r="1"/></svg>
+  </div>
+  <div class="section-heading">
+    <p class="section-title">Your scent profile</p>
+    <p class="section-sub">The notes you actually gravitate toward, weighted by rating</p>
+  </div>
+</div>
+<div id="scentProfile"></div>
+
+<div class="section-header">
+  <div class="section-icon icon-collection">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22c4 0 6.5-2.5 6.5-6 0-3-2-5-3-7 0 2-1.5 3-2.5 3 .5-3-1-5.5-3-7 .5 3-1 5-2.5 6.5-1.5 1.5-2 3-2 4.5 0 3.5 2.5 6 6.5 6z"/></svg>
+  </div>
+  <div class="section-heading">
+    <p class="section-title">My collection</p>
+    <p class="section-sub">Ranked by how much you gravitate toward each one</p>
+  </div>
+</div>
+<div class="wl-add-row">
+  <div class="ac-wrap">
+    <input type="text" id="col-name" placeholder="Fragrance name" autocomplete="off">
+    <div class="ac-dropdown hide" id="col-name-ac"></div>
+  </div>
+  <button id="colAddBtn">Add</button>
+</div>
+<div id="collection"></div>
+
+<div id="recommendationsHeader" class="hide">
+  <div class="section-header">
+    <div class="section-icon icon-recommend">
+      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l1.8 6.2L20 10l-6.2 1.8L12 18l-1.8-6.2L4 10l6.2-1.8L12 2z"/></svg>
+    </div>
+    <div class="section-heading">
+      <p class="section-title">Recommended for you</p>
+      <p class="section-sub">Bottles you don't own yet that match your profile</p>
+    </div>
+  </div>
+</div>
+<div id="recommendations"></div>
+
+<div class="section-header" style="margin-top:28px;">
+  <div class="section-icon icon-log">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3c4 5 6 8.2 6 11a6 6 0 0 1-12 0c0-2.8 2-6 6-11z"/></svg>
+  </div>
+  <div class="section-heading">
+    <p class="section-title">Log a new test</p>
+    <p class="section-sub">Track a bottle's dry-down from spray to base</p>
+  </div>
+</div>
+<button class="toggle-form" id="toggleFormBtn">+ Add entry</button>
+
+<div class="panel hide" id="formPanel">
+  <label>Fragrance name</label>
+
+  <div class="ac-wrap">
+    <input type="text" id="f-name" placeholder="Baccarat Rouge 540" autocomplete="off">
+    <div class="ac-dropdown hide" id="f-name-ac"></div>
+  </div>
+  <p class="autofill-note hide" id="autofillNote">Notes auto-filled from your library, edit anything below.</p>
+
+  <div class="row2">
+    <div>
+      <label>House</label>
+      <input type="text" id="f-house" placeholder="Maison Francis Kurkdjian">
+    </div>
+    <div>
+      <label>Concentration</label>
+      <select id="f-conc">
+        <option value="EDC">EDC</option>
+        <option value="EDT">EDT</option>
+        <option value="EDP" selected>EDP</option>
+        <option value="Parfum">Parfum / extrait</option>
+        <option value="Unknown">Not sure</option>
+      </select>
+    </div>
+  </div>
+
+  <label>Fragrance family</label>
+  <select id="f-family">
+    <option value="">Not sure yet</option>
+    <optgroup label="Floral">
+      <option value="Soft floral">Soft floral</option>
+      <option value="Floral">Floral</option>
+      <option value="Fruity floral">Fruity floral</option>
+    </optgroup>
+    <optgroup label="Oriental">
+      <option value="Soft oriental">Soft oriental</option>
+      <option value="Oriental">Oriental</option>
+      <option value="Woody oriental">Woody oriental</option>
+    </optgroup>
+    <optgroup label="Woody">
+      <option value="Woods">Woods</option>
+      <option value="Mossy woods (chypre)">Mossy woods (chypre)</option>
+      <option value="Dry woods (leather)">Dry woods (leather)</option>
+    </optgroup>
+    <optgroup label="Fresh">
+      <option value="Citrus">Citrus</option>
+      <option value="Green">Green</option>
+      <option value="Water (aquatic)">Water (aquatic)</option>
+      <option value="Fresh spicy">Fresh spicy</option>
+    </optgroup>
+  </select>
+
+  <label>Date tested</label>
+  <input type="date" id="f-date">
+
+  <label>Application site</label>
+  <select id="f-site">
+    <option value="Wrists/pulse points">Wrists / pulse points</option>
+    <option value="Neck/chest">Neck / chest</option>
+    <option value="Clothing">Clothing</option>
+    <option value="Hair">Hair</option>
+  </select>
+
+  <label>Checkpoint notes</label>
+  <div class="checkpoints">
+    <div>
+      <label style="margin-top:0">0 min (top)</label>
+      <input type="text" id="cp-0" placeholder="What's loud right now">
+    </div>
+    <div>
+      <label style="margin-top:0">30 min</label>
+      <input type="text" id="cp-30" placeholder="What shifted">
+    </div>
+    <div>
+      <label style="margin-top:0">2 hrs (heart)</label>
+      <input type="text" id="cp-2h" placeholder="Core character">
+    </div>
+    <div>
+      <label style="margin-top:0">6 hrs (base)</label>
+      <input type="text" id="cp-6h" placeholder="Still there / gone">
+    </div>
+  </div>
+
+  <label>Overall longevity</label>
+  <select id="f-longevity">
+    <option value="Faded fast (under 2 hrs)">Faded fast (under 2 hrs)</option>
+    <option value="Moderate (2-6 hrs)" selected>Moderate (2-6 hrs)</option>
+    <option value="Long (6-10 hrs)">Long (6-10 hrs)</option>
+    <option value="All day (10+ hrs)">All day (10+ hrs)</option>
+  </select>
+
+  <label>Other notes</label>
+  <textarea id="f-notes" placeholder="Projection, skin chemistry factors, weather, anything else"></textarea>
+
+  <div class="chk-row">
+    <input type="checkbox" id="f-savelib" checked>
+    <label for="f-savelib" style="margin:0; text-transform:none; letter-spacing:normal; font-size:12.5px; color:var(--ink-soft);">Save these notes to my library for next time</label>
+  </div>
+
+  <p class="err" id="formErr">Enter a fragrance name first.</p>
+  <button class="btn-primary" id="saveBtn">Save entry</button>
+</div>
+
+<div class="section-header">
+  <div class="section-icon icon-wishlist">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h12v18l-6-4-6 4V3z"/></svg>
+  </div>
+  <div class="section-heading">
+    <p class="section-title">Want to test</p>
+    <p class="section-sub">Bottles on your radar, not tried yet</p>
+  </div>
+</div>
+<div class="wl-add-row">
+  <div class="ac-wrap">
+    <input type="text" id="wl-name" placeholder="Fragrance name" autocomplete="off">
+    <div class="ac-dropdown hide" id="wl-name-ac"></div>
+  </div>
+  <button id="wlAddBtn">Add</button>
+</div>
+<div id="wishlist"></div>
+
+<div class="section-header">
+  <div class="section-icon icon-tested">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.5 2"/></svg>
+  </div>
+  <div class="section-heading">
+    <p class="section-title">Tested</p>
+    <p class="section-sub">Your full longevity log, most recent first</p>
+  </div>
+</div>
+<div id="entries"></div>
+
+<div class="section-header" style="margin-top:28px;">
+  <div class="section-icon icon-data">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12m0 0l-4-4m4 4l4-4"/><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></svg>
+  </div>
+  <div class="section-heading">
+    <p class="section-title">Your data</p>
+    <p class="section-sub">Back up everything, or restore from a backup</p>
+  </div>
+</div>
+<div class="panel">
+  <div class="data-actions">
+    <button id="exportBtn">Export my data</button>
+    <button id="importBtn">Import backup</button>
+  </div>
+  <input type="file" id="importFile" accept="application/json,.json" class="hide">
+  <p class="import-err" id="importErr"></p>
+  <p class="data-meta" id="dataMeta"></p>
+  <div class="reminder hide" id="backupReminder">
+    <span id="backupReminderText"></span>
+    <button id="backupReminderBtn">Export now</button>
+  </div>
+</div>
+
+<script>
+// Standard browser storage, works in any browser including a saved
+// home screen app, no connection to Claude needed.
+const storage = {
+  async get(key) {
+    const raw = localStorage.getItem(key);
+    if (raw === null) throw new Error('not found');
+    return { key: key, value: raw };
+  },
+  async set(key, value) {
+    localStorage.setItem(key, value);
+    return { key: key, value: value };
+  }
+};
+
+let entries = [];
+let wishlist = [];
+let collection = [];
+let customLibrary = {};
+let expandedCollectionIds = new Set();
+
+const SEED_COLLECTION = [
+  { name: 'Baccarat Rouge 540', gravitate: 8 },
+  { name: 'Delina', gravitate: 5 }
+];
+
+const DISPLAY_NAMES = {
+  'baccarat rouge 540': 'Baccarat Rouge 540',
+  'delina': 'Delina',
+  'delina exclusif': 'Delina Exclusif',
+  'althair': 'Althair',
+  'erba pura': 'Erba Pura',
+  'instant crush': 'Instant Crush',
+  'santal 33': 'Santal 33',
+  'chanel no 5': 'Chanel No. 5',
+  'coco mademoiselle': 'Coco Mademoiselle',
+  'tobacco vanille': 'Tobacco Vanille',
+  'black opium': 'Black Opium',
+  'sauvage': 'Sauvage',
+  'aventus': 'Aventus',
+  'vanilla 28': 'Vanilla 28',
+  'another 13': 'Another 13',
+  'the ghost in the shell': 'The Ghost In The Shell'
+};
+
+const BUILTIN_LIBRARY = {
+  'baccarat rouge 540': {
+    house: 'Maison Francis Kurkdjian', conc: 'Parfum', family: 'Woody oriental',
+    cp0: 'Sweet, jammy saffron with a bright jasmine lift, slightly medicinal',
+    cp30: 'Saffron fading, jasmine softening, ambroxan starting to come forward',
+    cp2h: 'Warm, skin-like amber and cedar, less sweet than the opening',
+    cp6h: 'Ambroxan and fir resin still present, soft musky-woody trail up close',
+    longevity: 'All day (10+ hrs)'
+  },
+  'delina': {
+    house: 'Parfums de Marly', conc: 'EDP', family: 'Fruity floral',
+    cp0: 'Tart rhubarb with syrupy lychee sweetness',
+    cp30: 'Rose and peony rising, fruit softening',
+    cp2h: 'Full rose-peony heart, iris starting to show its powdery side',
+    cp6h: 'Powdery iris, musk, and sandalwood, soft and close to skin',
+    longevity: 'Long (6-10 hrs)'
+  },
+  'delina exclusif': {
+    house: 'Parfums de Marly', conc: 'EDP', family: 'Woody oriental',
+    cp0: 'Sheer jasmine with saffron and fir balsam',
+    cp30: 'Jasmine deepening, amberwood starting to build',
+    cp2h: 'Amberwood and oud-like woods, sultrier than standard Delina',
+    cp6h: 'Musk and amberwood trail, warm and close',
+    longevity: 'All day (10+ hrs)'
+  },
+  'althair': {
+    house: 'Parfums de Marly', conc: 'EDP', family: 'Oriental',
+    cp0: 'Bright citrus with a touch of pear',
+    cp30: 'Rose warming, vanilla starting to show',
+    cp2h: 'Luminous rose-vanilla heart, sensual and warm',
+    cp6h: 'Soft amber and vanilla, skin-close',
+    longevity: 'Long (6-10 hrs)'
+  },
+  'erba pura': {
+    house: 'Xerjoff', conc: 'EDP', family: 'Fruity floral',
+    cp0: 'Juicy Mediterranean fruit, bright and sweet',
+    cp30: 'Fruit softening into white musk',
+    cp2h: 'Musk and vanilla, sweet but not powdery',
+    cp6h: 'Warm amber-musk base, understated',
+    longevity: 'Long (6-10 hrs)'
+  },
+  'instant crush': {
+    house: 'Mancera', conc: 'EDP', family: 'Woody oriental',
+    cp0: 'Citrus and ginger over saffron',
+    cp30: 'Rose and jasmine rising, saffron still present',
+    cp2h: 'Amber-vanilla-musk heart, rose accent throughout',
+    cp6h: 'Musk and amber trail, long projection',
+    longevity: 'All day (10+ hrs)'
+  },
+  'santal 33': {
+    house: 'Le Labo', conc: 'EDP', family: 'Woods',
+    cp0: 'Dry sandalwood and a leathery, spiced opening',
+    cp30: 'Cardamom and iris softening the wood',
+    cp2h: 'Creamy sandalwood core, slightly smoky violet',
+    cp6h: 'Ambroxan and sandalwood, quiet skin scent',
+    longevity: 'Long (6-10 hrs)'
+  },
+  'chanel no 5': {
+    house: 'Chanel', conc: 'EDP', family: 'Soft floral',
+    cp0: 'Sparkling aldehydes, soapy-clean and bright',
+    cp30: 'Rose and jasmine bouquet emerging',
+    cp2h: 'Full floral heart, powdery iris undertone',
+    cp6h: 'Sandalwood and vanilla, soft and powdery',
+    longevity: 'Long (6-10 hrs)'
+  },
+  'coco mademoiselle': {
+    house: 'Chanel', conc: 'EDP', family: 'Fruity floral',
+    cp0: 'Bright orange and bergamot with a hint of mandarin',
+    cp30: 'Rose and jasmine warming, sweetness building',
+    cp2h: 'Patchouli and vanilla rounding out the florals',
+    cp6h: 'Warm patchouli-vanilla base, soft musk trail',
+    longevity: 'Long (6-10 hrs)'
+  },
+  'tobacco vanille': {
+    house: 'Tom Ford', conc: 'EDP', family: 'Oriental',
+    cp0: 'Sweet tobacco leaf with spiced fruit',
+    cp30: 'Vanilla and cocoa starting to surface',
+    cp2h: 'Rich tobacco-vanilla heart, dried fruit undertone',
+    cp6h: 'Warm vanilla, tonka, and dried fruit, heavy and long-lasting',
+    longevity: 'All day (10+ hrs)'
+  },
+  'black opium': {
+    house: 'Yves Saint Laurent', conc: 'EDP', family: 'Oriental',
+    cp0: 'Sharp coffee and pear, sweet and bold',
+    cp30: 'Coffee settling into vanilla',
+    cp2h: 'Vanilla-coffee gourmand heart, jasmine underneath',
+    cp6h: 'Warm vanilla, cedar, and patchouli base',
+    longevity: 'All day (10+ hrs)'
+  },
+  'sauvage': {
+    house: 'Dior', conc: 'EDT', family: 'Fresh spicy',
+    cp0: 'Sharp bergamot with peppery spice',
+    cp30: 'Pepper fading, ambroxan starting to show',
+    cp2h: 'Clean, ambroxan-driven warmth, minimal sweetness',
+    cp6h: 'Faint ambroxan and musk, close to skin',
+    longevity: 'Moderate (2-6 hrs)'
+  },
+  'aventus': {
+    house: 'Creed', conc: 'EDP', family: 'Fruity floral',
+    cp0: 'Sharp pineapple and bergamot, smoky birch underneath',
+    cp30: 'Fruit fading, birch and rose emerging',
+    cp2h: 'Smoky birch, dry woods, faint rose',
+    cp6h: 'Musk, oakmoss, and ambergris trail',
+    longevity: 'Long (6-10 hrs)'
+  },
+  'vanilla 28': {
+    house: 'Kayali', conc: 'EDP', family: 'Oriental',
+    cp0: 'Sweet vanilla and cinnamon, gourmand and bold',
+    cp30: 'Vanilla deepening, warm spice settling',
+    cp2h: 'Rich vanilla-tonka heart, ambroxan starting to build',
+    cp6h: 'Warm ambroxan-vanilla base, long skin scent',
+    longevity: 'All day (10+ hrs)'
+  },
+  'another 13': {
+    house: 'Le Labo', conc: 'EDP', family: 'Woody oriental',
+    cp0: 'Sharp ambroxan with a faint marine, salty edge',
+    cp30: 'Musk and ambroxan blending, clean and abstract',
+    cp2h: 'Warm skin-like ambroxan, minimal florals',
+    cp6h: 'Quiet ambroxan-musk trail, very close to skin',
+    longevity: 'Long (6-10 hrs)'
+  },
+  'the ghost in the shell': {
+    house: 'Etat Libre d\'Orange', conc: 'EDP', family: 'Floral',
+    cp0: 'Crisp aquatic freshness with zesty yuzu and a green, almost metallic edge',
+    cp30: 'Citrus fading, milky skin accord starting to soften the top',
+    cp2h: 'Radiant jasmine over a creamy, skin-like milky heart',
+    cp6h: 'Mossy, slightly smoky wood base, quiet and close to skin',
+    longevity: 'Moderate (2-6 hrs)'
+  },
+  'la vie est belle': {
+    house: 'Lancome', conc: 'EDP', family: 'Fruity floral',
+    cp0: 'Sweet black currant with a soft pear undertone',
+    cp30: 'Iris rising, praline warmth starting to build',
+    cp2h: 'Iris and jasmine heart, orange blossom lifting the sweetness',
+    cp6h: 'Praline, vanilla, and patchouli, warm and gourmand',
+    longevity: 'All day (10+ hrs)'
+  },
+  'miss dior': {
+    house: 'Dior', conc: 'EDP', family: 'Floral',
+    cp0: 'Bright mandarin and blood orange, zesty and crisp',
+    cp30: 'Citrus softening, rose starting to emerge',
+    cp2h: 'Rose and peony heart, lily of the valley adding freshness',
+    cp6h: 'Patchouli and musk, soft rosewood undertone',
+    longevity: 'Long (6-10 hrs)'
+  },
+  'flowerbomb': {
+    house: 'Viktor & Rolf', conc: 'EDP', family: 'Floral',
+    cp0: 'Bergamot with a light green tea note',
+    cp30: 'Jasmine and rose beginning to bloom',
+    cp2h: 'Full floral bomb, jasmine, rose, orchid, and freesia layered thick',
+    cp6h: 'Patchouli and musk, dense and warm',
+    longevity: 'All day (10+ hrs)'
+  },
+  'gucci bloom': {
+    house: 'Gucci', conc: 'EDP', family: 'Floral',
+    cp0: 'Green, slightly sharp tuberose right from the start',
+    cp30: 'Jasmine joining the tuberose, growing richer',
+    cp2h: 'Lush white florals, tuberose, jasmine, and Rangoon creeper',
+    cp6h: 'Musk and sandalwood, soft and lingering',
+    longevity: 'Long (6-10 hrs)'
+  },
+  'jadore': {
+    house: 'Dior', conc: 'EDP', family: 'Floral',
+    cp0: 'Juicy melon and peach with a bergamot lift',
+    cp30: 'Fruit fading, jasmine starting to show',
+    cp2h: 'Indian jasmine and damask rose, rich and radiant',
+    cp6h: 'White musk, vanilla, and cedarwood, warm and smooth',
+    longevity: 'Long (6-10 hrs)'
+  },
+  'libre': {
+    house: 'Yves Saint Laurent', conc: 'EDP', family: 'Soft floral',
+    cp0: 'Sharp lavender with a bright mandarin edge',
+    cp30: 'Lavender softening, orange blossom rising',
+    cp2h: 'Orange blossom and jasmine, floral with a herbal lavender thread',
+    cp6h: 'Musk, vanilla, cedarwood, and ambergris, warm and creamy',
+    longevity: 'Long (6-10 hrs)'
+  },
+  'la panthere': {
+    house: 'Cartier', conc: 'EDP', family: 'Floral',
+    cp0: 'Soft gardenia right from the opening, no sharp top',
+    cp30: 'Gardenia deepening, a first hint of leather underneath',
+    cp2h: 'Full gardenia heart with leather starting to show through',
+    cp6h: 'Musk, leather, and styrax, warm and slightly animalic',
+    longevity: 'Long (6-10 hrs)'
+  },
+  'narciso rodriguez for her': {
+    house: 'Narciso Rodriguez', conc: 'EDP', family: 'Soft floral',
+    cp0: 'Soft peach with a light bergamot lift',
+    cp30: 'Musk starting to build, peach fading',
+    cp2h: 'Musk, amber, and tuberose, skin-close and warm',
+    cp6h: 'Deep musk and amber, quiet skin scent',
+    longevity: 'Long (6-10 hrs)'
+  },
+  'daisy': {
+    house: 'Marc Jacobs', conc: 'EDT', family: 'Fruity floral',
+    cp0: 'Sweet wild strawberry with a green violet leaf edge',
+    cp30: 'Fruit fading, jasmine and violet rising',
+    cp2h: 'Jasmine and violet, light and youthful',
+    cp6h: 'Soft musk and vanilla, faint woods',
+    longevity: 'Moderate (2-6 hrs)'
+  },
+  'good girl': {
+    house: 'Carolina Herrera', conc: 'EDP', family: 'Oriental',
+    cp0: 'Bitter almond and coffee, dark and distinctive',
+    cp30: 'Coffee settling, jasmine and tuberose rising',
+    cp2h: 'Jasmine and tuberose heart over the dark coffee-almond base',
+    cp6h: 'Tonka bean, cacao, and vanilla, warm and rich',
+    longevity: 'All day (10+ hrs)'
+  },
+  'my way': {
+    house: 'Giorgio Armani', conc: 'EDP', family: 'Floral',
+    cp0: 'Bergamot and orange blossom, bright and clean',
+    cp30: 'Tuberose starting to show through the citrus',
+    cp2h: 'Indian jasmine and tuberose, warm white floral heart',
+    cp6h: 'Cedarwood and white musk, soft and smooth',
+    longevity: 'Long (6-10 hrs)'
+  },
+  'cheirosa 62': {
+    house: 'Sol de Janeiro', conc: 'EDP', family: 'Oriental',
+    cp0: 'Nutty pistachio and almond, slightly bitter and grounded',
+    cp30: 'Jasmine and heliotrope starting to soften the nutty opening',
+    cp2h: 'Jasmine petals over a warm, powdery heliotrope heart',
+    cp6h: 'Salted caramel, vanilla, and sandalwood, warm gourmand finish',
+    longevity: 'Moderate (2-6 hrs)'
+  },
+  'cloud': {
+    house: 'Ariana Grande', conc: 'EDP', family: 'Fruity floral',
+    cp0: 'Lavender, pear, and bergamot, light and airy',
+    cp30: 'Coconut and whipped cream starting to build',
+    cp2h: 'Praline and vanilla orchid, sweet and creamy',
+    cp6h: 'Soft woods and musk, faint and close to skin',
+    longevity: 'Moderate (2-6 hrs)'
+  },
+  'yum boujee marshmallow': {
+    house: 'Kayali', conc: 'EDP', family: 'Oriental',
+    cp0: 'Pink lady apple and Italian lemon with a floral freesia lift',
+    cp30: 'Nectarine blossom and orange blossom water rising',
+    cp2h: 'Pink marshmallow, strawberry, and coconut flakes, sweet and plush',
+    cp6h: 'Whipped vanilla, raspberry sugar, and pink musk with ambroxan, long and warm',
+    longevity: 'All day (10+ hrs)'
+  },
+  'black orchid': {
+    house: 'Tom Ford', conc: 'EDP', family: 'Woody oriental',
+    cp0: 'French jasmine, black currant, and black truffle, dark and unusual',
+    cp30: 'Ylang-ylang starting to soften the truffle',
+    cp2h: 'Dark orchid heart, spice and fruit layered thick',
+    cp6h: 'Patchouli, sandalwood, and incense, dense and sensual',
+    longevity: 'All day (10+ hrs)'
+  },
+  'bright crystal': {
+    house: 'Versace', conc: 'EDT', family: 'Fruity floral',
+    cp0: 'Chilled yuzu and pomegranate, icy and sharp',
+    cp30: 'Fruit settling, peony starting to rise',
+    cp2h: 'Peony, magnolia, and lotus flower, soft and pink',
+    cp6h: 'Musk and amber, quiet and clean',
+    longevity: 'Moderate (2-6 hrs)'
+  },
+  'paradoxe': {
+    house: 'Prada', conc: 'EDP', family: 'Fruity floral',
+    cp0: 'Very ripe pear, almost boozy',
+    cp30: 'Neroli and vanilla starting to round out the pear',
+    cp2h: 'Amber and vanilla heart, warm and slightly powdery',
+    cp6h: 'Musk and amber, soft synthetic warmth',
+    longevity: 'Long (6-10 hrs)'
+  },
+  'donna born in roma': {
+    house: 'Valentino', conc: 'EDP', family: 'Oriental',
+    cp0: 'Pink pepper with a bright jasmine lift',
+    cp30: 'Jasmine deepening, bourbon vanilla rising',
+    cp2h: 'Jasmine and bourbon vanilla heart, rich and warm',
+    cp6h: 'Warm vanilla and musk, long and enveloping',
+    longevity: 'Long (6-10 hrs)'
+  },
+  'scandal': {
+    house: 'Jean Paul Gaultier', conc: 'EDP', family: 'Oriental',
+    cp0: 'Blood orange and mandarin, bright and juicy',
+    cp30: 'Honey and gardenia starting to build',
+    cp2h: 'Gardenia, orange blossom, jasmine, and peach, rich white floral heart',
+    cp6h: 'Beeswax, caramel, patchouli, and licorice, dark and gourmand',
+    longevity: 'All day (10+ hrs)'
+  },
+  'nomade': {
+    house: 'Chloe', conc: 'EDP', family: 'Mossy woods (chypre)',
+    cp0: 'Mirabelle plum and freesia, fruity and green',
+    cp30: 'Freesia softening, a first hint of oakmoss',
+    cp2h: 'Oakmoss and patchouli, earthy and slightly bitter',
+    cp6h: 'Deep mossy patchouli base, mature and sophisticated',
+    longevity: 'Long (6-10 hrs)'
+  },
+  'linterdit': {
+    house: 'Givenchy', conc: 'EDP', family: 'Floral',
+    cp0: 'Pear and orange blossom, bright and slightly green',
+    cp30: 'Tuberose starting to show through the pear',
+    cp2h: 'Tuberose and jasmine, rich white floral heart',
+    cp6h: 'Patchouli and vetiver, dark and grounded',
+    longevity: 'Long (6-10 hrs)'
+  },
+  'burberry her': {
+    house: 'Burberry', conc: 'EDP', family: 'Fruity floral',
+    cp0: 'Blackberry and red currant, tart and juicy',
+    cp30: 'Berries fading, jasmine starting to rise',
+    cp2h: 'Jasmine and violet, soft floral heart',
+    cp6h: 'Amber, musk, and vanilla, warm and sweet',
+    longevity: 'Moderate (2-6 hrs)'
+  },
+  'light blue': {
+    house: 'Dolce & Gabbana', conc: 'EDT', family: 'Citrus',
+    cp0: 'Sicilian lemon and green apple, sharp and juicy',
+    cp30: 'Citrus fading, cedar starting to show',
+    cp2h: 'Bellflower, jasmine, and white rose, light and clean',
+    cp6h: 'Musk, amber, and cedar, quiet and fresh',
+    longevity: 'Moderate (2-6 hrs)'
+  },
+  'mon guerlain': {
+    house: 'Guerlain', conc: 'EDP', family: 'Soft floral',
+    cp0: 'Bergamot with a sharp lavender edge',
+    cp30: 'Lavender softening, iris and jasmine sambac rising',
+    cp2h: 'Iris, jasmine sambac, and rose, powdery and floral',
+    cp6h: 'Vanilla, tonka bean, and sandalwood, warm and creamy',
+    longevity: 'Long (6-10 hrs)'
+  },
+  'twilly': {
+    house: 'Hermes', conc: 'EDP', family: 'Fresh spicy',
+    cp0: 'Sharp, peppery ginger right from the start',
+    cp30: 'Ginger softening, tuberose beginning to show',
+    cp2h: 'Tuberose heart, floral with a lingering spice',
+    cp6h: 'Sandalwood, soft and quiet',
+    longevity: 'Moderate (2-6 hrs)'
+  },
+  'alien': {
+    house: 'Mugler', conc: 'EDP', family: 'Woody oriental',
+    cp0: 'Minimal opening, jasmine sambac right away',
+    cp30: 'Jasmine deepening, cashmeran wood starting to show',
+    cp2h: 'Jasmine sambac and cashmeran wood, warm and radiant',
+    cp6h: 'White amber, dense and long-lasting',
+    longevity: 'All day (10+ hrs)'
+  },
+  'olympea': {
+    house: 'Rabanne', conc: 'EDP', family: 'Oriental',
+    cp0: 'Green mandarin and ginger flower, bright and sharp',
+    cp30: 'Orange blossom and salty vanilla starting to build',
+    cp2h: 'Salty vanilla and marine notes, warm oriental heart',
+    cp6h: 'Ambergris, cashmere wood, and sandalwood, rich and long',
+    longevity: 'All day (10+ hrs)'
+  },
+  'leau dissey': {
+    house: 'Issey Miyake', conc: 'EDT', family: 'Soft floral',
+    cp0: 'Freesia, lotus, and rose, light and watery',
+    cp30: 'Lily and carnation starting to show',
+    cp2h: 'Lily, carnation, and cyclamen, clean floral heart',
+    cp6h: 'Musk, sandalwood, and amber, soft and quiet',
+    longevity: 'Moderate (2-6 hrs)'
+  },
+  'le parfum': {
+    house: 'Elie Saab', conc: 'EDP', family: 'Floral',
+    cp0: 'African orange flower, bright and radiant',
+    cp30: 'Jasmine starting to rise through the orange blossom',
+    cp2h: 'Jasmine and honey, sweet and glowing white floral heart',
+    cp6h: 'Patchouli and woods, soft and warm',
+    longevity: 'Long (6-10 hrs)'
+  },
+  'sugar': {
+    house: 'Fresh', conc: 'EDT', family: 'Fruity floral',
+    cp0: 'Sugar cane and mandarin, bright and sweet',
+    cp30: 'Rose petals starting to soften the sweetness',
+    cp2h: 'Rose petal heart with a plum undertone',
+    cp6h: 'Vanilla and plum, soft and warm',
+    longevity: 'Moderate (2-6 hrs)'
+  },
+  'you': {
+    house: 'Glossier', conc: 'EDP', family: 'Soft floral',
+    cp0: 'Pink pepper, sharp and slightly spicy',
+    cp30: 'Iris starting to soften the pepper',
+    cp2h: 'Iris and ambrette seed, powdery and skin-like',
+    cp6h: 'Musk, quiet and close to skin',
+    longevity: 'Moderate (2-6 hrs)'
+  },
+  'jimmy choo': {
+    house: 'Jimmy Choo', conc: 'EDP', family: 'Oriental',
+    cp0: 'Sweet pear with an exotic tiger orchid lift',
+    cp30: 'Honeysuckle and toffee starting to build',
+    cp2h: 'Toffee and honeysuckle, sweet and warm heart',
+    cp6h: 'Indonesian patchouli, dense and long-lasting',
+    longevity: 'Long (6-10 hrs)'
+  },
+  'beautiful': {
+    house: 'Estee Lauder', conc: 'EDP', family: 'Floral',
+    cp0: 'Marigold and orange blossom, bright and radiant',
+    cp30: 'Rose starting to show through the marigold',
+    cp2h: 'Rose, lily, and tuberose, rich white floral heart',
+    cp6h: 'Sandalwood and amber, warm and soft',
+    longevity: 'Long (6-10 hrs)'
+  },
+  'vanilla skin': {
+    house: 'Phlur', conc: 'EDP', family: 'Oriental',
+    cp0: 'Sugar and pink pepper with a crisp red apple top',
+    cp30: 'Cashmere wood starting to show, jasmine rising',
+    cp2h: 'Jasmine and lily over soft cashmere wood',
+    cp6h: 'Vanilla, sandalwood, benzoin, and agarwood, warm skin scent',
+    longevity: 'Moderate (2-6 hrs)'
+  },
+  'caramel skin': {
+    house: 'Phlur', conc: 'EDP', family: 'Oriental',
+    cp0: 'Caramel and bergamot, sweet and bright',
+    cp30: 'Milk and vanilla bean starting to build',
+    cp2h: 'Caramel, milk, and vanilla bean, rich gourmand heart',
+    cp6h: 'Brown sugar, sandalwood, and musk, warm and sweet',
+    longevity: 'Long (6-10 hrs)'
+  },
+  'goddess': {
+    house: 'Burberry', conc: 'EDP', family: 'Oriental',
+    cp0: 'Woody vanilla with a sharp lavender top',
+    cp30: 'Lavender fading, vanilla caviar starting to build',
+    cp2h: 'Vanilla caviar and ginger, warm and spicy heart',
+    cp6h: 'Vanilla absolute and cacao, rich and enveloping',
+    longevity: 'Long (6-10 hrs)'
+  },
+  'eilish': {
+    house: 'Billie Eilish', conc: 'EDP', family: 'Oriental',
+    cp0: 'Sugar and mandarin, bright and sweet',
+    cp30: 'Vanilla orchid and cocoa starting to build',
+    cp2h: 'Vanilla orchid, cocoa, and red berries, warm gourmand heart',
+    cp6h: 'Creamy sandalwood, musk, and cedarwood, soft and warm',
+    longevity: 'Moderate (2-6 hrs)'
+  },
+  'i want choo': {
+    house: 'Jimmy Choo', conc: 'EDP', family: 'Fruity floral',
+    cp0: 'Fresh peach and mandarin orange, juicy and bright',
+    cp30: 'Jasmine starting to rise through the peach',
+    cp2h: 'Jasmine and lily, floral heart over lingering peach',
+    cp6h: 'Warm vanilla and sandalwood, soft and sweet',
+    longevity: 'Long (6-10 hrs)'
+  },
+  'classique': {
+    house: 'Jean Paul Gaultier', conc: 'EDP', family: 'Oriental',
+    cp0: 'Rose and rum, boozy and floral right from the start',
+    cp30: 'Rose settling, orange blossom and star anise rising',
+    cp2h: 'Narcissus and vanilla orchid, warm floral heart with a spiced ginger edge',
+    cp6h: 'Vanilla, amber, tonka bean, and sandalwood, rich and long-lasting',
+    longevity: 'Long (6-10 hrs)'
+  },
+  'leau de parfum lumineuse': {
+    house: 'Chloe', conc: 'EDP', family: 'Soft oriental',
+    cp0: 'Bright rose, luminous and clean',
+    cp30: 'Jasmine starting to rise through the rose',
+    cp2h: 'Rose and jasmine floral heart, radiant and soft',
+    cp6h: 'Amber, vanilla, and balsamic warmth, gentle and lasting',
+    longevity: 'Long (6-10 hrs)'
+  },
+  'fleur narcotique': {
+    house: 'Ex Nihilo', conc: 'EDP', family: 'Fruity floral',
+    cp0: 'Litchi, peach, and bergamot, juicy and bright',
+    cp30: 'Fruit settling, peony starting to bloom',
+    cp2h: 'Peony as the standout, with jasmine layered underneath',
+    cp6h: 'Musk and soft woods, quiet and lingering',
+    longevity: 'Long (6-10 hrs)'
+  },
+  'million gold for her': {
+    house: 'Rabanne', conc: 'EDP', family: 'Oriental',
+    cp0: 'Lavender and ylang-ylang, aromatic and floral',
+    cp30: 'Rose rising, moss starting to ground the florals',
+    cp2h: 'Rose and moss heart, earthy and floral at once',
+    cp6h: 'Salty mineral musk and vanilla, warm and distinctive',
+    longevity: 'Long (6-10 hrs)'
+  },
+  'valaya': {
+    house: 'Parfums de Marly', conc: 'EDP', family: 'Floral',
+    cp0: 'Bergamot, mandarin, and sweet white peach, airy and crisp',
+    cp30: 'Citrus settling, orange blossom and white flowers opening up',
+    cp2h: 'Creamy white florals over a clean, linen-like softness',
+    cp6h: 'White musk, akigalawood, and ambrofix, skin-hugging and diffusive',
+    longevity: 'All day (10+ hrs)'
+  },
+  'bianco latte': {
+    house: 'Giardini di Toscana', conc: 'EDP', family: 'Oriental',
+    cp0: 'Caramel, warm and sugary right from the spray',
+    cp30: 'Honey and coumarin building, turning creamy',
+    cp2h: 'Honey and coumarin heart, milky and comforting',
+    cp6h: 'Vanilla and white musk, soft gourmand cloud that lingers',
+    longevity: 'All day (10+ hrs)'
+  },
+  'mango skin': {
+    house: 'Vilhelm Parfumerie', conc: 'EDP', family: 'Fruity floral',
+    cp0: 'Ripe juicy mango with blackberry and a black pepper bite',
+    cp30: 'Fruit softening, orris and jasmine coming forward',
+    cp2h: 'Wild orris, black lotus, and jasmine over lingering mango',
+    cp6h: 'Patchouli, vanilla, and pink sugar, sweet and skin-like',
+    longevity: 'Moderate (2-6 hrs)'
+  },
+  'ange ou demon': {
+    house: 'Givenchy', conc: 'EDP', family: 'Oriental',
+    cp0: 'Saffron, thyme, and mandarin, spicy and unusual',
+    cp30: 'Spice settling, lily and ylang-ylang rising',
+    cp2h: 'Lily, ylang-ylang, and orchid, elegant floral heart',
+    cp6h: 'Vanilla, tonka bean, rosewood, and oakmoss, warm and sensual',
+    longevity: 'Long (6-10 hrs)'
+  },
+  'roses vanille': {
+    house: 'Mancera', conc: 'EDP', family: 'Oriental',
+    cp0: 'Italian lemon, bright and sharp against the sweetness',
+    cp30: 'Lemon fading fast, Turkish rose taking over',
+    cp2h: 'Turkish rose and vanilla, rich and unmistakable',
+    cp6h: 'Vanilla, white musk, and cedar, dense and projecting',
+    longevity: 'All day (10+ hrs)'
+  },
+  'sweet like candy': {
+    house: 'Ariana Grande', conc: 'EDP', family: 'Fruity floral',
+    cp0: 'Sugar-frosted blackberry, pear, and bergamot, juicy and sparkling',
+    cp30: 'Fruit softening into whipped cream and marshmallow',
+    cp2h: 'Marshmallow, black currant, jasmine, and honeysuckle, sweet and fluffy',
+    cp6h: 'Vanilla and cashmere wood, soft and lightly gourmand',
+    longevity: 'Moderate (2-6 hrs)'
+  },
+  'guidance 46': {
+    house: 'Amouage', conc: 'Parfum', family: 'Oriental',
+    cp0: 'Pear, hazelnut, and bitter almond over frankincense and pink pepper',
+    cp30: 'Saffron rising, rose water starting to bloom',
+    cp2h: 'Rose, sambac jasmine, and osmanthus over smoky frankincense',
+    cp6h: 'Cistus, sandalwood, ambergris, and ambroxan, salty and musky',
+    longevity: 'All day (10+ hrs)'
+  },
+  'attrape reves': {
+    house: 'Louis Vuitton', conc: 'EDP', family: 'Fruity floral',
+    cp0: 'Litchi, ginger, and bergamot, juicy with a spicy edge',
+    cp30: 'Fruit settling, peony starting to open',
+    cp2h: 'Peony and Turkish rose with an unexpected cacao warmth',
+    cp6h: 'Patchouli, earthy and grounding under the florals',
+    longevity: 'Long (6-10 hrs)'
+  },
+  'dulce': {
+    house: 'By Rosie Jane', conc: 'EDP', family: 'Oriental',
+    cp0: 'Sweet vanilla with a fleeting caramel-popcorn brightness',
+    cp30: 'Caramel fading, marshmallow and creamy vanilla taking over',
+    cp2h: 'Creamy vanilla and brown sugar, soft and candy-like',
+    cp6h: 'Vanilla, brown sugar, and warm hinoki wood, cozy and close',
+    longevity: 'Moderate (2-6 hrs)'
+  },
+  'miu miu': {
+    house: 'Miu Miu', conc: 'EDP', family: 'Floral',
+    cp0: 'Green notes and dog rose, fresh and slightly sharp',
+    cp30: 'Lily of the valley opening up, greenness softening',
+    cp2h: 'Jasmine and lily of the valley, elegant and clean',
+    cp6h: 'Akigalawood, earthy and deep under the florals',
+    longevity: 'Long (6-10 hrs)'
+  },
+  'tonka cola': {
+    house: 'Mancera', conc: 'EDP', family: 'Oriental',
+    cp0: 'Sicilian lemon, cinnamon stick, nutmeg, and black cherry, fizzy and spiced',
+    cp30: 'Cola accord bubbling up, orange blossom softening the spice',
+    cp2h: 'Fizzy cola, Indonesian patchouli, and orange flower, playful and warm',
+    cp6h: 'Tonka bean, vanilla, benzoin, and labdanum, sweet and resinous',
+    longevity: 'All day (10+ hrs)'
+  },
+  'very good girl': {
+    house: 'Carolina Herrera', conc: 'EDP', family: 'Fruity floral',
+    cp0: 'Juicy red currant and exotic lychee, bright and tart',
+    cp30: 'Fruit settling, rose coming forward',
+    cp2h: 'Seductive rose heart, richer and fruitier than the original Good Girl',
+    cp6h: 'Warm vanilla, sweet and lingering',
+    longevity: 'Moderate (2-6 hrs)'
+  },
+  'vanilla milk': {
+    house: 'Ellis Brooklyn', conc: 'EDP', family: 'Oriental',
+    cp0: 'Milky, lactonic vanilla right from the spray',
+    cp30: 'Creamy vanilla deepening, a touch of lactonic funk',
+    cp2h: 'Deep vanilla bean over a milky, almost eggnog-like warmth',
+    cp6h: 'Ambery vanilla, rich and smooth, very long on skin',
+    longevity: 'All day (10+ hrs)'
+  }
+};
+
+const POPULAR_DISPLAY_NAMES = {
+  'la vie est belle': 'La Vie Est Belle',
+  'miss dior': 'Miss Dior',
+  'flowerbomb': 'Flowerbomb',
+  'gucci bloom': 'Gucci Bloom',
+  'jadore': "J'adore",
+  'libre': 'Libre',
+  'la panthere': 'La Panthere',
+  'narciso rodriguez for her': 'Narciso Rodriguez For Her',
+  'daisy': 'Daisy',
+  'good girl': 'Good Girl',
+  'my way': 'My Way',
+  'cheirosa 62': 'Cheirosa 62',
+  'cloud': 'Cloud',
+  'yum boujee marshmallow': 'Yum Boujee Marshmallow',
+  'black orchid': 'Black Orchid',
+  'bright crystal': 'Bright Crystal',
+  'paradoxe': 'Paradoxe',
+  'donna born in roma': 'Donna Born In Roma',
+  'scandal': 'Scandal',
+  'nomade': 'Nomade',
+  'linterdit': "L'Interdit",
+  'burberry her': 'Burberry Her',
+  'light blue': 'Light Blue',
+  'mon guerlain': 'Mon Guerlain',
+  'twilly': 'Twilly',
+  'alien': 'Alien',
+  'olympea': 'Olympea',
+  'leau dissey': "L'Eau d'Issey",
+  'le parfum': 'Le Parfum',
+  'sugar': 'Sugar',
+  'you': 'You',
+  'jimmy choo': 'Jimmy Choo',
+  'beautiful': 'Beautiful',
+  'vanilla skin': 'Vanilla Skin',
+  'caramel skin': 'Caramel Skin',
+  'goddess': 'Goddess',
+  'eilish': 'Eilish',
+  'i want choo': 'I Want Choo',
+  'classique': 'Classique',
+  'leau de parfum lumineuse': "L'Eau de Parfum Lumineuse",
+  'fleur narcotique': 'Fleur Narcotique',
+  'million gold for her': 'Million Gold For Her',
+  'valaya': 'Valaya',
+  'bianco latte': 'Bianco Latte',
+  'mango skin': 'Mango Skin',
+  'ange ou demon': 'Ange ou Demon',
+  'roses vanille': 'Roses Vanille',
+  'sweet like candy': 'Sweet Like Candy',
+  'guidance 46': 'Guidance 46',
+  'attrape reves': 'Attrape-Reves',
+  'dulce': 'Dulce',
+  'miu miu': 'Miu Miu',
+  'tonka cola': 'Tonka Cola',
+  'very good girl': 'Very Good Girl',
+  'vanilla milk': 'Vanilla Milk'
+};
+Object.assign(DISPLAY_NAMES, POPULAR_DISPLAY_NAMES);
+
+const SEED_WISHLIST = [
+  { name: 'Parfums de Marly Althair', note: 'Rose/vanilla, luminous like Delina, amber base not iris' },
+  { name: 'Xerjoff Erba Pura', note: 'Fruity floral, white musk, vanilla, amber, no powder' },
+  { name: 'Mancera Instant Crush', note: 'BR540-adjacent, rose accent, saffron/jasmine/amber/musk' }
+];
+
+function esc(s) {
+  const d = document.createElement('div');
+  d.textContent = s || '';
+  return d.innerHTML;
+}
+
+function fmtDate(d) {
+  if (!d) return '';
+  const dt = new Date(d + 'T00:00:00');
+  return dt.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
+}
+
+async function storageSetWithRetry(key, value, tries = 2) {
+  for (let i = 0; i < tries; i++) {
+    try {
+      await storage.set(key, value);
+      return true;
+    } catch (e) {
+      if (i === tries - 1) {
+        console.error('Storage set failed for', key, e);
+        return false;
+      }
+      await new Promise(r => setTimeout(r, 200));
+    }
+  }
+  return false;
+}
+
+async function loadCustomLibrary() {
+  try {
+    const res = await storage.get('scent-custom-library');
+    customLibrary = res && res.value ? JSON.parse(res.value) : {};
+  } catch (e) {
+    customLibrary = {};
+  }
+}
+
+async function saveCustomLibrary() {
+  await storageSetWithRetry('scent-custom-library', JSON.stringify(customLibrary));
+}
+
+function lookupFragrance(name) {
+  const key = name.trim().toLowerCase();
+  if (!key) return null;
+  if (customLibrary[key]) return customLibrary[key];
+  if (BUILTIN_LIBRARY[key]) return BUILTIN_LIBRARY[key];
+  const combined = Object.assign({}, BUILTIN_LIBRARY, customLibrary);
+  const partial = Object.keys(combined).find(k => key.includes(k) || k.includes(key));
+  return partial ? combined[partial] : null;
+}
+
+function searchLibrary(query) {
+  const q = query.trim().toLowerCase();
+  if (!q) return [];
+  const combined = Object.assign({}, BUILTIN_LIBRARY, customLibrary);
+  const results = Object.keys(combined)
+    .filter(k => {
+      const nameMatch = k.includes(q);
+      const houseMatch = (combined[k].house || '').toLowerCase().includes(q);
+      return nameMatch || houseMatch;
+    })
+    .map(k => ({
+      key: k,
+      displayName: (combined[k].name || DISPLAY_NAMES[k] || k),
+      house: combined[k].house || '',
+      data: combined[k]
+    }));
+
+  // Show exact/name matches first, then brand matches, alphabetically within each group
+  results.sort((a, b) => {
+    const aNameMatch = a.key.includes(q);
+    const bNameMatch = b.key.includes(q);
+    if (aNameMatch !== bNameMatch) return aNameMatch ? -1 : 1;
+    return a.displayName.localeCompare(b.displayName);
+  });
+
+  return results.slice(0, 8);
+}
+
+function applyAutofill(data) {
+  const note = document.getElementById('autofillNote');
+  if (!data) {
+    note.classList.add('hide');
+    return;
+  }
+  document.getElementById('f-house').value = data.house || '';
+  document.getElementById('f-conc').value = data.conc || 'EDP';
+  document.getElementById('f-family').value = data.family || '';
+  document.getElementById('cp-0').value = data.cp0 || '';
+  document.getElementById('cp-30').value = data.cp30 || '';
+  document.getElementById('cp-2h').value = data.cp2h || '';
+  document.getElementById('cp-6h').value = data.cp6h || '';
+  document.getElementById('f-longevity').value = data.longevity || 'Moderate (2-6 hrs)';
+  note.classList.remove('hide');
+}
+
+function wireAutocomplete(inputId, dropdownId, onPick) {
+  const input = document.getElementById(inputId);
+  const dropdown = document.getElementById(dropdownId);
+
+  function render(matches) {
+    if (matches.length === 0) {
+      dropdown.classList.add('hide');
+      dropdown.innerHTML = '';
+      return;
+    }
+    dropdown.innerHTML = matches.map(m => `
+      <div class="ac-item" data-key="${m.key}">
+        <div class="ac-name">${esc(m.displayName)}</div>
+        ${m.house ? `<div class="ac-house">${esc(m.house)}</div>` : ''}
+      </div>
+    `).join('');
+    dropdown.classList.remove('hide');
+    dropdown.querySelectorAll('.ac-item').forEach(el => {
+      el.addEventListener('mousedown', (e) => e.preventDefault());
+      el.addEventListener('click', () => {
+        const match = matches.find(m => m.key === el.dataset.key);
+        if (match) {
+          input.value = match.displayName;
+          onPick(match.data);
+        }
+        dropdown.classList.add('hide');
+        dropdown.innerHTML = '';
+      });
+    });
+  }
+
+  input.addEventListener('input', () => {
+    render(searchLibrary(input.value));
+  });
+  input.addEventListener('blur', () => {
+    setTimeout(() => {
+      dropdown.classList.add('hide');
+      dropdown.innerHTML = '';
+      onPick(lookupFragrance(input.value), true);
+    }, 120);
+  });
+}
+
+wireAutocomplete('f-name', 'f-name-ac', (data) => applyAutofill(data));
+wireAutocomplete('col-name', 'col-name-ac', () => {});
+wireAutocomplete('wl-name', 'wl-name-ac', () => {});
+
+
+async function loadEntries() {
+  try {
+    const res = await storage.get('scent-entries');
+    entries = res && res.value ? JSON.parse(res.value) : [];
+  } catch (e) {
+    entries = [];
+  }
+  render();
+}
+
+async function saveEntries() {
+  await storageSetWithRetry('scent-entries', JSON.stringify(entries));
+}
+
+async function loadCollection() {
+  let existing = null;
+  try {
+    const res = await storage.get('scent-collection');
+    existing = res ? res.value : null;
+  } catch (e) {
+    existing = null;
+  }
+
+  if (existing) {
+    try {
+      collection = JSON.parse(existing);
+    } catch (e) {
+      collection = [];
+    }
+  } else {
+    collection = SEED_COLLECTION.map(c => ({
+      id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
+      name: c.name,
+      gravitate: c.gravitate
+    }));
+    await saveCollection();
+  }
+  renderCollection();
+}
+
+async function saveCollection() {
+  await storageSetWithRetry('scent-collection', JSON.stringify(collection));
+}
+
+function renderCollection() {
+  const wrap = document.getElementById('collection');
+  if (collection.length === 0) {
+    wrap.innerHTML = '<div class="empty">Add the bottles you own to start ranking them.</div>';
+    return;
+  }
+  const sorted = [...collection].sort((a, b) => (b.gravitate || 0) - (a.gravitate || 0));
+  wrap.innerHTML = sorted.map((c, i) => {
+    const isOpen = expandedCollectionIds.has(c.id);
+    const data = lookupFragrance(c.name);
+    let notesHtml = '';
+    if (isOpen) {
+      if (data) {
+        notesHtml = `
+          <div class="collection-notes">
+            ${data.house || data.family ? `<div class="entry-meta" style="margin-bottom:8px;">${esc(data.house || '')}${data.house && data.family ? ' &middot; ' : ''}${esc(data.family || '')}${data.longevity ? ' &middot; ' + esc(data.longevity) : ''}</div>` : ''}
+            <div class="cp-grid">
+              ${data.cp0 ? `<div><span>0 min:</span> ${esc(data.cp0)}</div>` : ''}
+              ${data.cp30 ? `<div><span>30 min:</span> ${esc(data.cp30)}</div>` : ''}
+              ${data.cp2h ? `<div><span>2 hrs:</span> ${esc(data.cp2h)}</div>` : ''}
+              ${data.cp6h ? `<div><span>6 hrs:</span> ${esc(data.cp6h)}</div>` : ''}
+            </div>
+          </div>
+        `;
+      } else {
+        notesHtml = `
+          <div class="collection-notes">
+            <p class="collection-notes-empty">No notes on file for this one yet. Log a full test for it to add notes to your library.</p>
+          </div>
+        `;
+      }
+    }
+    return `
+    <div class="collection-item">
+      <div class="rank-number ${i === 0 ? 'rank-1' : ''}">${i + 1}</div>
+      <div class="collection-body">
+        <div class="collection-top">
+          <div class="collection-name-row" data-toggle-id="${c.id}">
+            <span class="collection-chevron ${isOpen ? 'open' : ''}">&#9656;</span>
+            <div class="collection-name">${esc(c.name)}</div>
+          </div>
+          <span class="rank-badge" id="badge-${c.id}">${c.gravitate}/10</span>
+        </div>
+        <div class="gravitate-row">
+          <span class="gravitate-label">Gravitate</span>
+          <input type="range" min="1" max="10" step="1" value="${c.gravitate}" data-colid="${c.id}" class="gravitate-slider">
+        </div>
+        ${notesHtml}
+        <button class="del" data-colid-del="${c.id}" style="margin-top:8px">Remove</button>
+      </div>
+    </div>
+  `;
+  }).join('');
+
+  wrap.querySelectorAll('[data-toggle-id]').forEach(el => {
+    el.addEventListener('click', () => {
+      const id = el.dataset.toggleId;
+      if (expandedCollectionIds.has(id)) {
+        expandedCollectionIds.delete(id);
+      } else {
+        expandedCollectionIds.add(id);
+      }
+      renderCollection();
+    });
+  });
+
+  wrap.querySelectorAll('.gravitate-slider').forEach(slider => {
+    // Live badge update while dragging, no re-sort or re-render yet
+    slider.addEventListener('input', () => {
+      const badge = document.getElementById('badge-' + slider.dataset.colid);
+      if (badge) badge.textContent = slider.value + '/10';
+    });
+    // Only re-sort and rebuild the list once the user lets go
+    slider.addEventListener('change', async () => {
+      const item = collection.find(c => c.id === slider.dataset.colid);
+      if (item) {
+        item.gravitate = Number(slider.value);
+        await saveCollection();
+        renderCollection();
+      }
+    });
+  });
+
+  wrap.querySelectorAll('[data-colid-del]').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      collection = collection.filter(c => c.id !== btn.dataset.colidDel);
+      await saveCollection();
+      renderCollection();
+    });
+  });
+
+  renderScentProfile();
+}
+
+const NOTE_VOCAB = [
+  'bergamot', 'lemon', 'yuzu', 'mandarin', 'blood orange', 'orange', 'grapefruit',
+  'pink pepper', 'ginger', 'lavender', 'pear', 'apple', 'melon', 'peach', 'plum',
+  'lychee', 'rhubarb', 'black currant', 'pomegranate', 'strawberry', 'raspberry',
+  'sugar', 'saffron', 'neroli', 'green tea', 'tea',
+  'rose', 'jasmine', 'jasmine sambac', 'tuberose', 'gardenia', 'orange blossom',
+  'iris', 'violet', 'peony', 'lily', 'freesia', 'honeysuckle', 'magnolia',
+  'cinnamon', 'cardamom', 'nutmeg', 'tonka bean', 'honey', 'caramel', 'toffee',
+  'praline', 'coconut', 'almond', 'cherry',
+  'ambroxan', 'sandalwood', 'cedar', 'cedarwood', 'patchouli', 'oakmoss', 'vetiver',
+  'vanilla', 'musk', 'labdanum', 'benzoin', 'amber', 'ambergris', 'agarwood', 'oud',
+  'leather', 'incense', 'styrax', 'tobacco', 'cacao', 'cocoa', 'brown sugar', 'musk'
+];
+
+function extractNotes(text) {
+  if (!text) return [];
+  const lower = text.toLowerCase();
+  const found = [];
+  for (const term of NOTE_VOCAB) {
+    if (lower.includes(term) && !found.includes(term)) found.push(term);
+  }
+  return found;
+}
+
+function titleCaseNote(note) {
+  return note.replace(/\b\w/g, c => c.toUpperCase());
+}
+
+function computeScentProfile() {
+  const topWeights = {};
+  const heartWeights = {};
+  const baseWeights = {};
+  let matchedCount = 0;
+
+  collection.forEach(item => {
+    const data = lookupFragrance(item.name);
+    if (!data) return;
+    matchedCount++;
+    const weight = item.gravitate || 5;
+
+    extractNotes(data.cp0).forEach(n => { topWeights[n] = (topWeights[n] || 0) + weight; });
+    extractNotes(data.cp2h).forEach(n => { heartWeights[n] = (heartWeights[n] || 0) + weight; });
+    extractNotes(data.cp6h).forEach(n => { baseWeights[n] = (baseWeights[n] || 0) + weight; });
+  });
+
+  const topN = (weights, n) => Object.entries(weights)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, n)
+    .map(([note]) => note);
+
+  return {
+    matchedCount,
+    top: topN(topWeights, 5),
+    heart: topN(heartWeights, 5),
+    base: topN(baseWeights, 5),
+    topWeights, heartWeights, baseWeights
+  };
+}
+
+function computeRecommendations(profile) {
+  if (profile.matchedCount < 2) return [];
+
+  const ownedKeys = new Set();
+  collection.forEach(item => {
+    const key = item.name.trim().toLowerCase();
+    ownedKeys.add(key);
+    // also mark the resolved library key as owned, in case the typed name
+    // doesn't exactly match the key (e.g. partial match resolution)
+    const data = lookupFragrance(item.name);
+    if (data) {
+      const combined = Object.assign({}, BUILTIN_LIBRARY, customLibrary);
+      const resolvedKey = Object.keys(combined).find(k => combined[k] === data);
+      if (resolvedKey) ownedKeys.add(resolvedKey);
+    }
+  });
+
+  const combined = Object.assign({}, BUILTIN_LIBRARY, customLibrary);
+  const scored = [];
+
+  Object.keys(combined).forEach(key => {
+    if (ownedKeys.has(key)) return;
+    const data = combined[key];
+    const topMatches = extractNotes(data.cp0).filter(n => profile.topWeights[n]);
+    const heartMatches = extractNotes(data.cp2h).filter(n => profile.heartWeights[n]);
+    const baseMatches = extractNotes(data.cp6h).filter(n => profile.baseWeights[n]);
+
+    let score = 0;
+    topMatches.forEach(n => { score += profile.topWeights[n]; });
+    heartMatches.forEach(n => { score += profile.heartWeights[n]; });
+    baseMatches.forEach(n => { score += profile.baseWeights[n]; });
+
+    if (score > 0) {
+      scored.push({
+        key,
+        displayName: data.name || DISPLAY_NAMES[key] || key,
+        house: data.house || '',
+        score,
+        matchedNotes: [...new Set([...topMatches, ...heartMatches, ...baseMatches])].slice(0, 3)
+      });
+    }
+  });
+
+  scored.sort((a, b) => b.score - a.score);
+  return scored.slice(0, 5);
+}
+
+function renderRecommendations(profile) {
+  const wrap = document.getElementById('recommendations');
+  const header = document.getElementById('recommendationsHeader');
+  if (!wrap) return;
+
+  if (profile.matchedCount < 2) {
+    wrap.innerHTML = '';
+    if (header) header.classList.add('hide');
+    return;
+  }
+
+  const recs = computeRecommendations(profile);
+
+  if (recs.length === 0) {
+    wrap.innerHTML = '';
+    if (header) header.classList.add('hide');
+    return;
+  }
+
+  if (header) header.classList.remove('hide');
+
+  wrap.innerHTML = `
+    <div class="profile-panel">
+      ${recs.map(r => `
+        <div class="collection-item" style="margin-bottom:8px; padding:12px 14px;">
+          <div style="flex:1;">
+            <div class="collection-top">
+              <div class="collection-name" style="font-size:14.5px;">${esc(r.displayName)}</div>
+            </div>
+            ${r.house ? `<div class="entry-meta" style="margin:2px 0 6px;">${esc(r.house)}</div>` : ''}
+            ${r.matchedNotes.length ? `<div class="profile-tags">${r.matchedNotes.map(n => `<span class="profile-tag">${esc(titleCaseNote(n))}</span>`).join('')}</div>` : ''}
+          </div>
+        </div>
+      `).join('')}
+    </div>
+  `;
+}
+
+function renderScentProfile() {
+  const wrap = document.getElementById('scentProfile');
+  const profile = computeScentProfile();
+
+  if (profile.matchedCount < 2) {
+    wrap.innerHTML = `
+      <div class="profile-panel">
+        <p style="font-size:13px; color:var(--ink-soft); margin:0;">
+          Log a couple more bottles with a gravitate score and this will start showing the top, heart, and base notes you actually lean toward.
+        </p>
+      </div>
+    `;
+    renderRecommendations(profile);
+    return;
+  }
+
+  const renderTags = (notes, cls) => notes.length
+    ? notes.map(n => `<span class="profile-tag ${cls}">${esc(titleCaseNote(n))}</span>`).join('')
+    : '<span style="font-size:12.5px; color:var(--ink-faint);">Not enough data yet</span>';
+
+  wrap.innerHTML = `
+    <div class="profile-panel">
+      <div class="profile-row">
+        <p class="profile-row-label" style="color:var(--gold);">Top notes you gravitate toward</p>
+        <div class="profile-tags">${renderTags(profile.top, 'top-tag')}</div>
+      </div>
+      <div class="profile-row">
+        <p class="profile-row-label" style="color:var(--wine);">Heart notes you gravitate toward</p>
+        <div class="profile-tags">${renderTags(profile.heart, 'heart-tag')}</div>
+      </div>
+      <div class="profile-row">
+        <p class="profile-row-label">Base notes you gravitate toward</p>
+        <div class="profile-tags">${renderTags(profile.base, 'base-tag')}</div>
+      </div>
+    </div>
+  `;
+
+  renderRecommendations(profile);
+}
+
+async function loadWishlist() {
+  let existing = null;
+  try {
+    const res = await storage.get('scent-wishlist');
+    existing = res ? res.value : null;
+  } catch (e) {
+    existing = null;
+  }
+
+  if (existing) {
+    try {
+      wishlist = JSON.parse(existing);
+    } catch (e) {
+      wishlist = [];
+    }
+  } else {
+    wishlist = SEED_WISHLIST.map(w => ({
+      id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
+      name: w.name,
+      note: w.note
+    }));
+    await saveWishlist();
+  }
+  renderWishlist();
+}
+
+async function saveWishlist() {
+  await storageSetWithRetry('scent-wishlist', JSON.stringify(wishlist));
+}
+
+function renderWishlist() {
+  const wrap = document.getElementById('wishlist');
+  if (wishlist.length === 0) {
+    wrap.innerHTML = '<div class="empty">Nothing on your list yet.</div>';
+    return;
+  }
+  wrap.innerHTML = wishlist.map(w => `
+    <div class="wishlist-item">
+      <div>
+        <div class="wishlist-name">${esc(w.name)}</div>
+        ${w.note ? `<div class="wishlist-note">${esc(w.note)}</div>` : ''}
+      </div>
+      <button class="del" data-wlid="${w.id}">Remove</button>
+    </div>
+  `).join('');
+
+  wrap.querySelectorAll('.del').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      wishlist = wishlist.filter(w => w.id !== btn.dataset.wlid);
+      await saveWishlist();
+      renderWishlist();
+    });
+  });
+}
+
+function longevityClass(longevity) {
+  if (!longevity) return 'longevity-fast';
+  if (longevity.includes('Faded')) return 'longevity-fast';
+  if (longevity.includes('Moderate')) return 'longevity-moderate';
+  if (longevity.includes('Long')) return 'longevity-long';
+  if (longevity.includes('All day')) return 'longevity-allday';
+  return 'longevity-fast';
+}
+
+function render() {
+  const wrap = document.getElementById('entries');
+  if (entries.length === 0) {
+    wrap.innerHTML = '<div class="empty">No entries yet. Log your first test above.</div>';
+    return;
+  }
+  const sorted = [...entries].sort((a, b) => (b.date || '').localeCompare(a.date || ''));
+  wrap.innerHTML = sorted.map(e => {
+    const lc = longevityClass(e.longevity);
+    return `
+    <div class="entry ${lc}">
+      <div class="entry-top">
+        <div>
+          <div class="entry-name">${esc(e.name)}</div>
+          ${e.house ? `<div class="entry-house">${esc(e.house)}</div>` : ''}
+        </div>
+        <span class="badge">${esc(e.conc)}</span>
+      </div>
+      <div class="entry-meta"><span class="longevity-dot ${lc}"></span>${fmtDate(e.date)}${e.site ? ' · ' + esc(e.site) : ''} · ${esc(e.longevity)}${e.family ? ' · ' + esc(e.family) : ''}</div>
+      <div class="cp-grid">
+        ${e.cp0 ? `<div><span>0 min:</span> ${esc(e.cp0)}</div>` : ''}
+        ${e.cp30 ? `<div><span>30 min:</span> ${esc(e.cp30)}</div>` : ''}
+        ${e.cp2h ? `<div><span>2 hrs:</span> ${esc(e.cp2h)}</div>` : ''}
+        ${e.cp6h ? `<div><span>6 hrs:</span> ${esc(e.cp6h)}</div>` : ''}
+      </div>
+      ${e.notes ? `<div class="entry-notes">${esc(e.notes)}</div>` : ''}
+      <button class="del" data-id="${e.id}">Delete</button>
+    </div>
+  `;
+  }).join('');
+
+  wrap.querySelectorAll('.del').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      entries = entries.filter(e => e.id !== btn.dataset.id);
+      await saveEntries();
+      render();
+    });
+  });
+}
+
+document.getElementById('toggleFormBtn').addEventListener('click', () => {
+  const panel = document.getElementById('formPanel');
+  panel.classList.toggle('hide');
+  if (!panel.classList.contains('hide')) {
+    document.getElementById('f-date').valueAsDate = new Date();
+  }
+});
+
+document.getElementById('saveBtn').addEventListener('click', async () => {
+  const name = document.getElementById('f-name').value.trim();
+  const err = document.getElementById('formErr');
+  if (!name) {
+    err.style.display = 'block';
+    return;
+  }
+  err.style.display = 'none';
+
+  const entry = {
+    id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
+    name: name,
+    house: document.getElementById('f-house').value.trim(),
+    conc: document.getElementById('f-conc').value,
+    family: document.getElementById('f-family').value,
+    date: document.getElementById('f-date').value,
+    site: document.getElementById('f-site').value,
+    cp0: document.getElementById('cp-0').value.trim(),
+    cp30: document.getElementById('cp-30').value.trim(),
+    cp2h: document.getElementById('cp-2h').value.trim(),
+    cp6h: document.getElementById('cp-6h').value.trim(),
+    longevity: document.getElementById('f-longevity').value,
+    notes: document.getElementById('f-notes').value.trim()
+  };
+
+  entries.push(entry);
+  await saveEntries();
+
+  if (document.getElementById('f-savelib').checked) {
+    const key = entry.name.trim().toLowerCase();
+    if (key) {
+      customLibrary[key] = {
+        name: entry.name,
+        house: entry.house,
+        conc: entry.conc,
+        family: entry.family,
+        cp0: entry.cp0,
+        cp30: entry.cp30,
+        cp2h: entry.cp2h,
+        cp6h: entry.cp6h,
+        longevity: entry.longevity
+      };
+      await saveCustomLibrary();
+    }
+  }
+
+  render();
+
+  ['f-name','f-house','cp-0','cp-30','cp-2h','cp-6h','f-notes'].forEach(id => {
+    document.getElementById(id).value = '';
+  });
+  document.getElementById('f-family').value = '';
+  document.getElementById('autofillNote').classList.add('hide');
+  document.getElementById('formPanel').classList.add('hide');
+});
+
+document.getElementById('colAddBtn').addEventListener('click', async () => {
+  const input = document.getElementById('col-name');
+  const name = input.value.trim();
+  if (!name) return;
+  collection.push({
+    id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
+    name: name,
+    gravitate: 5
+  });
+  await saveCollection();
+  renderCollection();
+  input.value = '';
+});
+
+document.getElementById('wlAddBtn').addEventListener('click', async () => {
+  const input = document.getElementById('wl-name');
+  const name = input.value.trim();
+  if (!name) return;
+  const data = lookupFragrance(name);
+  let note = '';
+  if (data) {
+    const parts = [];
+    if (data.family) parts.push(data.family);
+    if (data.house) parts.push(data.house);
+    if (data.cp0) parts.push('opens with ' + data.cp0.toLowerCase());
+    note = parts.join(' · ');
+  }
+  wishlist.push({
+    id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
+    name: name,
+    note: note
+  });
+  await saveWishlist();
+  renderWishlist();
+  input.value = '';
+});
+
+// --- Phase 1: data durability (export / import / storage warning / backup reminder) ---
+
+const SCHEMA_VERSION = 2;
+const DATA_KEYS = {
+  entries: 'scent-entries',
+  collection: 'scent-collection',
+  wishlist: 'scent-wishlist',
+  customLibrary: 'scent-custom-library'
+};
+const META_KEY = 'scent-meta';
+const LAST_EXPORT_KEY = 'scent-last-exported-at';
+const STORAGE_BANNER_DISMISSED_KEY = 'scent-storage-banner-dismissed';
+
+function readJSON(key, fallback) {
+  try {
+    const raw = localStorage.getItem(key);
+    if (raw === null) return fallback;
+    const parsed = JSON.parse(raw);
+    return (parsed === null || parsed === undefined) ? fallback : parsed;
+  } catch (e) {
+    return fallback;
+  }
+}
+
+function ensureSchemaVersion() {
+  const meta = readJSON(META_KEY, {});
+  if (!meta.schemaVersion) {
+    meta.schemaVersion = SCHEMA_VERSION;
+    localStorage.setItem(META_KEY, JSON.stringify(meta));
+  }
+}
+
+function pad2(n) { return String(n).padStart(2, '0'); }
+
+function todayFilenameDate() {
+  const d = new Date();
+  return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
+}
+
+function currentRecordCounts() {
+  return {
+    entries: readJSON(DATA_KEYS.entries, []).length,
+    collection: readJSON(DATA_KEYS.collection, []).length,
+    wishlist: readJSON(DATA_KEYS.wishlist, []).length
+  };
+}
+
+function totalRecordCount() {
+  const c = currentRecordCounts();
+  return c.entries + c.collection + c.wishlist;
+}
+
+function exportData() {
+  const bundle = {
+    schemaVersion: SCHEMA_VERSION,
+    exportedAt: new Date().toISOString(),
+    data: {
+      entries: readJSON(DATA_KEYS.entries, []),
+      collection: readJSON(DATA_KEYS.collection, []),
+      wishlist: readJSON(DATA_KEYS.wishlist, []),
+      customLibrary: readJSON(DATA_KEYS.customLibrary, {})
+    }
+  };
+
+  const blob = new Blob([JSON.stringify(bundle, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `scent-log-backup-${todayFilenameDate()}.json`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+
+  localStorage.setItem(LAST_EXPORT_KEY, new Date().toISOString());
+  renderDataMeta();
+  renderBackupReminder();
+}
+
+function showImportError(msg) {
+  const err = document.getElementById('importErr');
+  err.textContent = msg;
+  err.style.display = msg ? 'block' : 'none';
+}
+
+function isValidBackup(bundle) {
+  if (!bundle || typeof bundle !== 'object') return false;
+  if (!bundle.schemaVersion || !bundle.data || typeof bundle.data !== 'object') return false;
+  const d = bundle.data;
+  if (!Array.isArray(d.entries) || !Array.isArray(d.collection) || !Array.isArray(d.wishlist)) return false;
+  if (typeof d.customLibrary !== 'object' || d.customLibrary === null || Array.isArray(d.customLibrary)) return false;
+  return true;
+}
+
+function importData(file) {
+  showImportError('');
+  const fileInput = document.getElementById('importFile');
+  const reader = new FileReader();
+
+  reader.onload = () => {
+    let bundle;
+    try {
+      bundle = JSON.parse(reader.result);
+    } catch (e) {
+      showImportError("That file isn't valid JSON. Nothing was changed.");
+      fileInput.value = '';
+      return;
+    }
+    if (!isValidBackup(bundle)) {
+      showImportError("That doesn't look like a Scent Log backup. Nothing was changed.");
+      fileInput.value = '';
+      return;
+    }
+
+    const current = currentRecordCounts();
+    const incomingBottles = bundle.data.collection.length;
+    const incomingEntries = bundle.data.entries.length;
+    const ok = confirm(
+      `This will replace your current data. You have ${current.collection} bottles and ${current.entries} entries now; the backup has ${incomingBottles} and ${incomingEntries}.\n\nContinue?`
+    );
+    fileInput.value = '';
+    if (!ok) return;
+
+    localStorage.setItem(DATA_KEYS.entries, JSON.stringify(bundle.data.entries));
+    localStorage.setItem(DATA_KEYS.collection, JSON.stringify(bundle.data.collection));
+    localStorage.setItem(DATA_KEYS.wishlist, JSON.stringify(bundle.data.wishlist));
+    localStorage.setItem(DATA_KEYS.customLibrary, JSON.stringify(bundle.data.customLibrary));
+    localStorage.setItem(META_KEY, JSON.stringify({ schemaVersion: SCHEMA_VERSION }));
+    location.reload();
+  };
+  reader.onerror = () => {
+    showImportError('Could not read that file. Nothing was changed.');
+    fileInput.value = '';
+  };
+  reader.readAsText(file);
+}
+
+function renderDataMeta() {
+  const el = document.getElementById('dataMeta');
+  const lastExport = localStorage.getItem(LAST_EXPORT_KEY);
+  el.textContent = lastExport
+    ? `Last backed up ${fmtDate(lastExport.slice(0, 10))}.`
+    : "You haven't exported a backup yet.";
+}
+
+function renderBackupReminder() {
+  const wrap = document.getElementById('backupReminder');
+  const lastExport = localStorage.getItem(LAST_EXPORT_KEY);
+  const daysSince = lastExport
+    ? (Date.now() - new Date(lastExport).getTime()) / 86400000
+    : Infinity;
+  const due = daysSince > 30 && totalRecordCount() > 10;
+  if (!due) {
+    wrap.classList.add('hide');
+    return;
+  }
+  document.getElementById('backupReminderText').textContent = lastExport
+    ? "It's been over a month since your last backup. Export a fresh one to stay covered."
+    : "You've logged some data and haven't backed it up yet. Export a copy now.";
+  wrap.classList.remove('hide');
+}
+
+async function checkStorageEstimate() {
+  const banner = document.getElementById('storageBanner');
+  if (localStorage.getItem(STORAGE_BANNER_DISMISSED_KEY)) return;
+  if (navigator.storage && navigator.storage.estimate) {
+    try {
+      const { usage, quota } = await navigator.storage.estimate();
+      if (usage !== undefined && quota) {
+        const usedKb = Math.max(1, Math.round(usage / 1024));
+        document.getElementById('storageBannerText').textContent =
+          `There's no account and no server. Using about ${usedKb}KB on this device. Clearing browser data or switching devices will erase everything unless you export a backup first.`;
+      }
+    } catch (e) {
+      // estimate unsupported or failed here, fall back to the default banner copy
+    }
+  }
+  banner.classList.remove('hide');
+}
+
+document.getElementById('exportBtn').addEventListener('click', exportData);
+document.getElementById('importBtn').addEventListener('click', () => {
+  document.getElementById('importFile').click();
+});
+document.getElementById('importFile').addEventListener('change', (e) => {
+  const file = e.target.files && e.target.files[0];
+  if (file) importData(file);
+});
+document.getElementById('storageBannerDismiss').addEventListener('click', () => {
+  localStorage.setItem(STORAGE_BANNER_DISMISSED_KEY, '1');
+  document.getElementById('storageBanner').classList.add('hide');
+});
+document.getElementById('backupReminderBtn').addEventListener('click', exportData);
+
+async function init() {
+  ensureSchemaVersion();
+  await loadCustomLibrary();
+  await loadEntries();
+  await loadCollection();
+  await loadWishlist();
+  renderDataMeta();
+  renderBackupReminder();
+  checkStorageEstimate();
+}
+
+init();
+</script>
+
+</body>
+</html>
