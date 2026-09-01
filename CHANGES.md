@@ -195,10 +195,45 @@ Matching the shell's own restraint rather than overbuilding past it:
 
 ### Explicitly not built (unchanged from the shell, deferred)
 
-Edit sheets for existing entries/bottles (§6.1), a note editor for
-unverified bottles, push notifications for checkpoints (§2.3 — overdue
-checkpoints still surface in-app on open, just not proactively),
-fill-depletion projection (§4.3), sample/decide-by tracking (§4.4), the
-layering log (§5.3), and note-pairing detection (§3.4, needs ≥3
-supporting bottles the seeded data can't reach). Each is a reasonable
-next independent phase.
+~~Edit sheets for existing entries/bottles (§6.1), a note editor for
+unverified bottles~~ — built in the next pass, see below. Push
+notifications for checkpoints (§2.3 — overdue checkpoints still
+surface in-app on open, just not proactively), fill-depletion
+projection (§4.3, editing the fill level itself is now possible, the
+depletion-date estimate from fill history over time is not),
+sample/decide-by tracking (§4.4), the layering log (§5.3), and
+note-pairing detection (§3.4, needs ≥3 supporting bottles) remain
+deferred. Each is a reasonable next independent phase.
+
+## Next pass: edit sheets (§6.1)
+
+Filled the gap flagged above and in the v2 shell pass itself (which
+explicitly shipped every "Edit" affordance as a toast stub).
+
+- **Bottle edit** (My shelf → expand → Edit bottle): house,
+  concentration, family, price paid, size (ml), fill level (%),
+  season and occasion tags — all editable inline, saved back to
+  `scent-collection`. This is what actually unlocks cost-per-wear,
+  the fill bar, and tag-based ranking in **What should I wear** for a
+  real bottle a user adds themselves, none of which had any input path
+  before this pass.
+- **Notes stay split by provenance.** A bottle matched to the built-in
+  library keeps its verified `top`/`heart`/`base` notes locked — the
+  edit form says so and points at the actual way to change it (remove
+  and re-add under a different name) rather than silently allowing an
+  edit that would drift from the verified source. An **unverified**
+  bottle gets three plain comma-separated inputs (top/heart/base)
+  instead; whatever the user types is tagged `notesSource: 'user'`,
+  which keeps it editable on every later visit — once entered, a
+  user's own words are never re-locked. Nothing here can insert
+  invented notes into a verified library entry.
+- **Entry edit** (Tested → Edit): date, site, longevity band, hours,
+  temperature, humidity, and the dry-down text are all editable in
+  place, so a typo or a forgotten weather reading doesn't mean
+  delete-and-relog.
+- Chip toggles (season/occasion) inside an open edit form sync the
+  surrounding text fields from the DOM before re-rendering, so
+  clicking a season chip can't silently discard whatever was just
+  typed into price/size/fill/notes above it — verified in both color
+  schemes with a Playwright pass that types into a field, toggles two
+  chips, and confirms the typed value survived before saving.

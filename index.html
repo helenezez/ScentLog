@@ -1116,6 +1116,8 @@ let state = {
   tab: 'test', expanded: {}, search: '', longFilter: 'all',
   season: 'summer', occasion: 'date',
   editingCp: null, cpDraft: '',
+  editingBottle: null, bottleDraft: null,
+  editingEntry: null,
   testName: '', testTemp: '', testRh: '',
   wishDraft: '', shelfDraft: '', passDraft: '', passReason: PASS_REASONS[0],
   toast: null, undoSnapshot: null, importErr: ''
@@ -1160,6 +1162,7 @@ function migrateIfNeeded() {
         longevity: lib ? lib.longevity : '',
         notes: lib ? lib.notes : null,
         prose: lib ? lib.prose : null,
+        notesSource: lib ? 'library' : undefined,
         seasons: [], occasions: [], sizeMl: null, fill: null, price: null
       };
     });
@@ -1396,7 +1399,32 @@ function renderTestedLog() {
       <div class="chip-row" style="flex-wrap:nowrap;overflow-x:auto;padding-bottom:2px">
         ${filterDefs.map(([k, l]) => chip(l, state.longFilter === k, 'var(--gold)', `data-filter="${k}"`)).join('')}
       </div>
-      ${filtered.map(e => `
+      ${filtered.map(e => state.editingEntry === e.id ? `
+        <div class="card" style="border-left:3px solid ${bandColor(e.longevity)};padding:11px 13px;display:flex;flex-direction:column;gap:8px">
+          <div class="entry-name">${esc(e.name)}</div>
+          <div class="row-flex">
+            <div class="f1"><input id="editDate" type="date" value="${esc(e.date || '')}"></div>
+            <div class="f1"><input id="editSite" value="${esc(e.site || '')}" placeholder="Site"></div>
+          </div>
+          <div class="row-flex">
+            <div class="f1">
+              <select id="editLongevity">
+                ${[LONG_FAST, LONG_MOD, LONG_LONG, LONG_ALL].map(l => `<option value="${esc(l)}" ${e.longevity === l ? 'selected' : ''}>${esc(LONG_SHORT[l])}</option>`).join('')}
+              </select>
+            </div>
+            <div class="f1"><input id="editHours" value="${e.hours != null ? e.hours : ''}" placeholder="Hours" inputmode="decimal"></div>
+          </div>
+          <div class="row-flex">
+            <div class="f1"><input id="editTempC" value="${e.tempC != null ? e.tempC : ''}" placeholder="Temp C (optional)" inputmode="numeric"></div>
+            <div class="f1"><input id="editRh" value="${e.rh != null ? e.rh : ''}" placeholder="Humidity % (optional)" inputmode="numeric"></div>
+          </div>
+          <textarea id="editDry" rows="3" placeholder="Dry-down notes">${esc(e.dry || '')}</textarea>
+          <div class="row-flex">
+            <button class="btn-primary" style="flex:1 1 auto" data-save-entry="${e.id}">Save</button>
+            <button data-cancel-entry="1" style="padding:9px 14px">Cancel</button>
+          </div>
+        </div>
+      ` : `
         <div class="card entry" style="border-left-color:${bandColor(e.longevity)}">
           <div class="entry-top">
             <div class="entry-name">${esc(e.name)}</div>
@@ -1412,7 +1440,7 @@ function renderTestedLog() {
           </div>
           ${e.dry ? `<div class="entry-dry">${esc(e.dry)}</div>` : ''}
           <div class="entry-actions">
-            <div class="link-action" data-stub="Edit sheet isn't built yet — that's a follow-up phase.">Edit</div>
+            <div class="link-action" data-edit-entry="${e.id}">Edit</div>
             <div class="link-faint" data-remove-entry="${e.id}" data-label="${esc(e.name)}">Remove</div>
           </div>
         </div>
@@ -1487,6 +1515,43 @@ function render_WhatToWear() {
   `;
 }
 
+function bottleFieldLabel(text) {
+  return `<div style="font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;color:var(--faint);margin-top:2px">${esc(text)}</div>`;
+}
+
+function renderBottleEditForm(c) {
+  const d = state.bottleDraft;
+  const notesEditable = !c.notes || c.notesSource === 'user';
+  return `
+    <div class="shelf-detail" style="gap:8px">
+      <input id="editHouse" value="${esc(d.house)}" placeholder="House">
+      <div class="row-flex">
+        <div class="f1"><input id="editConc" value="${esc(d.conc)}" placeholder="Concentration"></div>
+        <div class="f1"><input id="editFamily" value="${esc(d.family)}" placeholder="Fragrance family"></div>
+      </div>
+      <div class="row-flex">
+        <div class="f1"><input id="editPrice" value="${d.price != null ? d.price : ''}" placeholder="Price paid" inputmode="decimal"></div>
+        <div class="f1"><input id="editSizeMl" value="${d.sizeMl != null ? d.sizeMl : ''}" placeholder="Size (ml)" inputmode="numeric"></div>
+        <div class="f1"><input id="editFill" value="${d.fill != null ? d.fill : ''}" placeholder="Fill %" inputmode="numeric"></div>
+      </div>
+      ${bottleFieldLabel('Seasons')}
+      <div class="chip-row">${SEASONS.map(k => chip(k, d.seasons.includes(k), 'var(--sage)', `data-edit-season="${k}"`)).join('')}</div>
+      ${bottleFieldLabel('Occasions')}
+      <div class="chip-row">${OCCASIONS.map(k => chip(k, d.occasions.includes(k), 'var(--wine)', `data-edit-occasion="${k}"`)).join('')}</div>
+      ${notesEditable ? `
+        ${bottleFieldLabel('Your notes (comma-separated, optional)')}
+        <input id="editTop" value="${esc(d.notesTop)}" placeholder="Top notes, e.g. bergamot, pepper">
+        <input id="editHeart" value="${esc(d.notesHeart)}" placeholder="Heart notes">
+        <input id="editBase" value="${esc(d.notesBase)}" placeholder="Base notes">
+      ` : `<div style="font-size:11px;color:var(--faint);line-height:1.4">Notes are from the verified library and stay locked. Remove and re-add the bottle under a different name to enter your own.</div>`}
+      <div class="row-flex" style="margin-top:2px">
+        <button class="btn-primary" style="flex:1 1 auto" data-save-bottle="${c.id}">Save</button>
+        <button data-cancel-bottle="1" style="padding:9px 14px">Cancel</button>
+      </div>
+    </div>
+  `;
+}
+
 function render_Shelf_list() {
   const sorted = state.collection.slice().sort((a, b) => b.reach - a.reach);
   const wears = {};
@@ -1532,7 +1597,7 @@ function render_Shelf_list() {
             <div class="fill-text">${c.fill}%${c.sizeMl ? ' of ' + c.sizeMl + 'ml' : ''}</div>
           </div>
         ` : `<div style="height:10px"></div>`}
-        ${expanded ? `
+        ${expanded && state.editingBottle === c.id ? renderBottleEditForm(c) : expanded ? `
           <div class="shelf-detail">
             ${tiers.length ? `<div style="display:flex;flex-direction:column;gap:8px">
               ${tiers.map(t => `<div class="tier-row"><div class="tier-label" style="color:${t.color}">${t.label}</div><div class="tier-notes">${esc(t.notes)}</div></div>`).join('')}
@@ -1541,14 +1606,11 @@ function render_Shelf_list() {
               ${prose.map(p => `<div class="tier-row"><div class="prose-label">${p.label}</div><div class="prose-text">${esc(p.text)}</div></div>`).join('')}
             </div>` : ''}
             ${!tiers.length && !prose.length ? `
-              <div style="display:flex;flex-direction:column;gap:8px">
-                <div style="font-size:12px;color:var(--soft);line-height:1.5">No verified notes for this one. Nothing gets filled in from a guess. Add what you smell and it becomes yours.</div>
-                <button data-stub="Note editor isn't built yet — that's a follow-up phase." style="align-self:flex-start;padding:8px 12px;border:1px solid var(--gold-line);background:var(--gold-fill);color:var(--gold);font-size:11.5px;font-weight:650">Add notes from your nose</button>
-              </div>
+              <div style="font-size:12px;color:var(--soft);line-height:1.5">No verified notes for this one. Nothing gets filled in from a guess. Add what you smell in Edit bottle below and it becomes yours.</div>
             ` : ''}
             ${(c.seasons && c.seasons.length) || (c.occasions && c.occasions.length) ? `<div class="tag-row">${(c.seasons || []).concat(c.occasions || []).map(t => `<div class="tag">${esc(t)}</div>`).join('')}</div>` : ''}
             <div class="row-flex" style="gap:12px">
-              <div class="link-action" data-stub="Edit sheet isn't built yet — that's a follow-up phase.">Edit bottle</div>
+              <div class="link-action" data-edit-bottle="${c.id}">Edit bottle</div>
               <div class="link-faint" data-remove-collection="${c.id}" data-label="${esc(c.name)}">Remove</div>
             </div>
           </div>
@@ -1912,6 +1974,25 @@ function switchTab(key) {
   renderActiveTab(); renderHeader(); renderTabbar();
 }
 
+function splitNoteList(text) {
+  return (text || '').split(',').map(s => s.trim().toLowerCase()).filter(Boolean);
+}
+
+function syncBottleDraftFromDOM() {
+  const d = state.bottleDraft;
+  if (!d) return;
+  const g = id => document.getElementById(id);
+  if (g('editHouse')) d.house = g('editHouse').value;
+  if (g('editConc')) d.conc = g('editConc').value;
+  if (g('editFamily')) d.family = g('editFamily').value;
+  if (g('editPrice')) d.price = g('editPrice').value;
+  if (g('editSizeMl')) d.sizeMl = g('editSizeMl').value;
+  if (g('editFill')) d.fill = g('editFill').value;
+  if (g('editTop')) d.notesTop = g('editTop').value;
+  if (g('editHeart')) d.notesHeart = g('editHeart').value;
+  if (g('editBase')) d.notesBase = g('editBase').value;
+}
+
 function addCollectionItem(name) {
   const lib = lookupLibrary(name);
   return {
@@ -1919,6 +2000,7 @@ function addCollectionItem(name) {
     house: lib ? lib.house : '', conc: lib ? lib.conc : '', family: lib ? lib.family : '',
     reach: 5, longevity: lib ? lib.longevity : '',
     notes: lib ? lib.notes : null, prose: lib ? lib.prose : null,
+    notesSource: lib ? 'library' : undefined,
     seasons: [], occasions: [], sizeMl: null, fill: null, price: null
   };
 }
@@ -2004,6 +2086,30 @@ function wireEvents() {
     const remEntry = t.closest('[data-remove-entry]');
     if (remEntry) { removeWithUndo('entries', remEntry.getAttribute('data-remove-entry'), remEntry.getAttribute('data-label')); return; }
 
+    const editEntryBtn = t.closest('[data-edit-entry]');
+    if (editEntryBtn) { state.editingEntry = editEntryBtn.getAttribute('data-edit-entry'); renderActiveTab(); return; }
+    if (t.closest('[data-cancel-entry]')) { state.editingEntry = null; renderActiveTab(); return; }
+    const saveEntryBtn = t.closest('[data-save-entry]');
+    if (saveEntryBtn) {
+      const id = saveEntryBtn.getAttribute('data-save-entry');
+      const item = state.entries.find(x => x.id === id);
+      if (item) {
+        const g = fid => document.getElementById(fid);
+        item.date = g('editDate').value || item.date;
+        item.site = g('editSite').value.trim();
+        item.longevity = g('editLongevity').value;
+        const hrs = parseFloat(g('editHours').value);
+        item.hours = isNaN(hrs) ? item.hours : hrs;
+        const tc = g('editTempC').value.trim(), rh = g('editRh').value.trim();
+        item.tempC = tc === '' ? null : Number(tc);
+        item.rh = rh === '' ? null : Number(rh);
+        item.dry = g('editDry').value.trim();
+        persist();
+      }
+      state.editingEntry = null;
+      renderActiveTab(); return;
+    }
+
     const filterBtn = t.closest('[data-filter]');
     if (filterBtn) { state.longFilter = filterBtn.getAttribute('data-filter'); renderActiveTab(); return; }
 
@@ -2027,6 +2133,71 @@ function wireEvents() {
     }
     const remCollection = t.closest('[data-remove-collection]');
     if (remCollection) { removeWithUndo('collection', remCollection.getAttribute('data-remove-collection'), remCollection.getAttribute('data-label')); return; }
+
+    const editBottleBtn = t.closest('[data-edit-bottle]');
+    if (editBottleBtn) {
+      const id = editBottleBtn.getAttribute('data-edit-bottle');
+      const item = state.collection.find(x => x.id === id);
+      if (item) {
+        state.editingBottle = id;
+        state.bottleDraft = {
+          house: item.house || '', conc: item.conc || '', family: item.family || '',
+          price: item.price, sizeMl: item.sizeMl, fill: item.fill,
+          seasons: (item.seasons || []).slice(), occasions: (item.occasions || []).slice(),
+          notesTop: item.notes ? (item.notes.top || []).join(', ') : '',
+          notesHeart: item.notes ? (item.notes.heart || []).join(', ') : '',
+          notesBase: item.notes ? (item.notes.base || []).join(', ') : ''
+        };
+      }
+      renderActiveTab(); return;
+    }
+    if (t.closest('[data-cancel-bottle]')) { state.editingBottle = null; state.bottleDraft = null; renderActiveTab(); return; }
+
+    const editSeasonBtn = t.closest('[data-edit-season]');
+    if (editSeasonBtn) {
+      syncBottleDraftFromDOM();
+      const k = editSeasonBtn.getAttribute('data-edit-season');
+      const s = state.bottleDraft.seasons;
+      const i = s.indexOf(k);
+      if (i >= 0) s.splice(i, 1); else s.push(k);
+      renderActiveTab(); return;
+    }
+    const editOccasionBtn = t.closest('[data-edit-occasion]');
+    if (editOccasionBtn) {
+      syncBottleDraftFromDOM();
+      const k = editOccasionBtn.getAttribute('data-edit-occasion');
+      const o = state.bottleDraft.occasions;
+      const i = o.indexOf(k);
+      if (i >= 0) o.splice(i, 1); else o.push(k);
+      renderActiveTab(); return;
+    }
+    const saveBottleBtn = t.closest('[data-save-bottle]');
+    if (saveBottleBtn) {
+      syncBottleDraftFromDOM();
+      const id = saveBottleBtn.getAttribute('data-save-bottle');
+      const item = state.collection.find(x => x.id === id);
+      const d = state.bottleDraft;
+      if (item && d) {
+        item.house = d.house.trim(); item.conc = d.conc.trim(); item.family = d.family.trim();
+        item.price = d.price === '' || d.price == null ? null : Number(d.price);
+        item.sizeMl = d.sizeMl === '' || d.sizeMl == null ? null : Number(d.sizeMl);
+        item.fill = d.fill === '' || d.fill == null ? null : Math.max(0, Math.min(100, Number(d.fill)));
+        item.seasons = d.seasons; item.occasions = d.occasions;
+        const notesEditable = !item.notes || item.notesSource === 'user';
+        if (notesEditable) {
+          const top = splitNoteList(d.notesTop), heart = splitNoteList(d.notesHeart), base = splitNoteList(d.notesBase);
+          if (top.length || heart.length || base.length) {
+            item.notes = { top, heart, base };
+            item.notesSource = 'user';
+          } else {
+            item.notes = null; item.notesSource = undefined;
+          }
+        }
+        persist();
+      }
+      state.editingBottle = null; state.bottleDraft = null;
+      renderActiveTab(); renderHeader(); return;
+    }
 
     if (t.closest('#shelfAddBtn')) {
       const el = document.getElementById('shelfNameInput');
