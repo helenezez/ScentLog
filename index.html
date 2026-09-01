@@ -158,6 +158,19 @@ button:active { transform: scale(0.98); }
 }
 .chip.on { border-color: transparent; }
 
+.ac-wrap { position: relative; }
+.ac-dropdown {
+  position: absolute; top: calc(100% + 4px); left: 0; right: 0; z-index: 30;
+  background: var(--field); border: 1px solid var(--line); border-radius: var(--r-ctl);
+  overflow: hidden; max-height: 240px; overflow-y: auto;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.25);
+}
+.ac-item { padding: 9px 11px; border-bottom: 1px solid var(--hair); cursor: pointer; display: flex; align-items: baseline; gap: 7px; }
+.ac-item:last-child { border-bottom: none; }
+.ac-item:active { background: var(--card); }
+.ac-name { font-size: 12.5px; font-weight: 600; color: var(--ink); }
+.ac-house { font-size: 10.5px; color: var(--faint); flex: 1 1 auto; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
 .link-action { font-size: 11.5px; font-weight: 600; color: var(--gold); cursor: pointer; }
 .link-faint { font-size: 11.5px; font-weight: 600; color: var(--faint); cursor: pointer; }
 
@@ -386,6 +399,18 @@ function chip(label, active, tint, extra) {
     ? `border-color:${tint}59;background:${tint}26;color:${tint}`
     : `border-color:var(--line);background:transparent;color:var(--faint)`;
   return `<button class="chip" style="${style}" ${extra || ''}>${esc(label)}</button>`;
+}
+
+function renderAcDropdown(forId, query) {
+  if (state.acOpenFor !== forId) return '';
+  const matches = searchLibrary(query);
+  if (!matches.length) return '';
+  return `<div class="ac-dropdown">${matches.map(m => `
+    <div class="ac-item" data-ac-for="${forId}" data-ac-name="${esc(m.name)}">
+      <div class="ac-name">${esc(m.name)}</div>
+      <div class="ac-house">${esc(m.house)}</div>
+    </div>
+  `).join('')}</div>`;
 }
 
 
@@ -1110,6 +1135,20 @@ function displayName(name) {
   return DISPLAY_NAMES[key] || name;
 }
 
+function searchLibrary(query) {
+  const q = (query || '').trim().toLowerCase();
+  if (!q) return [];
+  const results = Object.keys(LIBRARY)
+    .filter(k => k.includes(q) || (LIBRARY[k].house || '').toLowerCase().includes(q))
+    .map(k => ({ key: k, name: displayName(k), house: LIBRARY[k].house || '' }));
+  results.sort((a, b) => {
+    const aName = a.key.includes(q), bName = b.key.includes(q);
+    if (aName !== bName) return aName ? -1 : 1;
+    return a.name.localeCompare(b.name);
+  });
+  return results.slice(0, 8);
+}
+
 // ---- state ----
 let state = {
   collection: [], entries: [], wishlist: [], passed: [], activeTest: null,
@@ -1118,6 +1157,7 @@ let state = {
   editingCp: null, cpDraft: '',
   editingBottle: null, bottleDraft: null,
   editingEntry: null,
+  acOpenFor: null,
   testName: '', testTemp: '', testRh: '',
   wishDraft: '', shelfDraft: '', passDraft: '', passReason: PASS_REASONS[0],
   toast: null, undoSnapshot: null, importErr: ''
@@ -1320,7 +1360,17 @@ function renderLiveTestCard() {
   const at = state.activeTest;
   if (!at) {
     const q = state.testName.trim().toLowerCase();
-    const sugg = q ? knownNames().filter(k => (k.name + ' ' + (k.house || '')).toLowerCase().includes(q)).slice(0, 5) : [];
+    let sugg = [];
+    if (q) {
+      const owned = knownNames().filter(k => (k.name + ' ' + (k.house || '')).toLowerCase().includes(q)).map(k => ({ name: k.name, house: k.house || '' }));
+      const fromLib = searchLibrary(q).map(m => ({ name: m.name, house: m.house }));
+      const seen = new Set();
+      sugg = owned.concat(fromLib).filter(s => {
+        const key = s.name.toLowerCase();
+        if (seen.has(key)) return false;
+        seen.add(key); return true;
+      }).slice(0, 8);
+    }
     return `
       <div class="card card-pad" style="display:flex;flex-direction:column;gap:10px">
         <div style="font-size:12.5px;color:var(--soft);line-height:1.45">Nothing on your skin right now. Start a test when you spray, and the clock handles the rest.</div>
@@ -1623,7 +1673,10 @@ function render_Shelf_list() {
     <div>
       ${sectionHeader({ glyph: GLYPH.shelf, title: 'My shelf', sub: 'Ranked by how often you actually reach for it', tint: 'var(--wine)', count: String(state.collection.length) })}
       <div class="row-flex" style="margin-bottom:9px">
-        <input id="shelfNameInput" class="f1" value="${esc(state.shelfDraft)}" placeholder="Add a bottle you own">
+        <div class="ac-wrap f1">
+          <input id="shelfNameInput" value="${esc(state.shelfDraft)}" placeholder="Add a bottle you own" autocomplete="off">
+          ${renderAcDropdown('shelfNameInput', state.shelfDraft)}
+        </div>
         <button id="shelfAddBtn" style="padding:10px 14px;border:none;background:var(--wine);color:var(--on-acc);font-size:12.5px;font-weight:650;flex:0 0 auto">Add</button>
       </div>
       <div style="display:flex;flex-direction:column;gap:9px">
@@ -1649,7 +1702,10 @@ function render_WantToTry() {
           </div>
         `).join('')}
         <div class="row-flex">
-          <input id="wishInput" class="f1" value="${esc(state.wishDraft)}" placeholder="Add something you want to try">
+          <div class="ac-wrap f1">
+            <input id="wishInput" value="${esc(state.wishDraft)}" placeholder="Add something you want to try" autocomplete="off">
+            ${renderAcDropdown('wishInput', state.wishDraft)}
+          </div>
           <button id="wishAddBtn" style="flex:0 0 auto;padding:10px 14px;border:none;background:var(--gold);color:var(--on-acc);font-size:12.5px;font-weight:650">Add</button>
         </div>
       </div>
@@ -1957,7 +2013,8 @@ function renderTabContent() {
 
 function renderActiveTab() {
   const active = document.activeElement;
-  const preserveId = active && active.id && (active.id === 'searchInput' || active.id === 'testNameInput') ? active.id : null;
+  const preserveIds = ['searchInput', 'testNameInput', 'shelfNameInput', 'wishInput'];
+  const preserveId = active && active.id && preserveIds.includes(active.id) ? active.id : null;
   const selStart = preserveId && 'selectionStart' in active ? active.selectionStart : null;
   renderTabContent();
   if (preserveId) {
@@ -2204,7 +2261,7 @@ function wireEvents() {
       const name = el ? el.value.trim() : '';
       if (!name) return;
       state.collection.push(addCollectionItem(name));
-      state.shelfDraft = ''; persist(); renderActiveTab(); renderHeader(); return;
+      state.shelfDraft = ''; state.acOpenFor = null; persist(); renderActiveTab(); renderHeader(); return;
     }
 
     const testWish = t.closest('[data-test-wish]');
@@ -2216,7 +2273,7 @@ function wireEvents() {
       const name = el ? el.value.trim() : '';
       if (!name) return;
       state.wishlist.push({ id: newId('w'), name, house: '', note: '' });
-      state.wishDraft = ''; persist(); renderActiveTab(); renderHeader(); return;
+      state.wishDraft = ''; state.acOpenFor = null; persist(); renderActiveTab(); renderHeader(); return;
     }
 
     const remPassed = t.closest('[data-remove-passed]');
@@ -2228,6 +2285,15 @@ function wireEvents() {
       const lib = lookupLibrary(name);
       state.passed.push({ id: newId('p'), name, reason: reasonEl ? reasonEl.value : PASS_REASONS[0], notes: lib ? lib.notes : null });
       state.passDraft = ''; persist(); renderActiveTab(); renderHeader(); return;
+    }
+
+    const acItem = t.closest('[data-ac-name]');
+    if (acItem) {
+      const forId = acItem.getAttribute('data-ac-for'), name = acItem.getAttribute('data-ac-name');
+      if (forId === 'shelfNameInput') state.shelfDraft = name;
+      else if (forId === 'wishInput') state.wishDraft = name;
+      state.acOpenFor = null;
+      renderActiveTab(); return;
     }
 
     const stub = t.closest('[data-stub]');
@@ -2256,8 +2322,8 @@ function wireEvents() {
     else if (id === 'testTempInput') { state.testTemp = e.target.value; }
     else if (id === 'testRhInput') { state.testRh = e.target.value; }
     else if (id === 'cpDraftInput') { state.cpDraft = e.target.value; }
-    else if (id === 'shelfNameInput') { state.shelfDraft = e.target.value; }
-    else if (id === 'wishInput') { state.wishDraft = e.target.value; }
+    else if (id === 'shelfNameInput') { state.shelfDraft = e.target.value; state.acOpenFor = 'shelfNameInput'; renderActiveTab(); }
+    else if (id === 'wishInput') { state.wishDraft = e.target.value; state.acOpenFor = 'wishInput'; renderActiveTab(); }
     else if (id === 'passNameInput') { state.passDraft = e.target.value; }
   });
   document.addEventListener('change', (e) => {

@@ -205,6 +205,20 @@ sample/decide-by tracking (§4.4), the layering log (§5.3), and
 note-pairing detection (§3.4, needs ≥3 supporting bottles) remain
 deferred. Each is a reasonable next independent phase.
 
+## Fix: autocomplete regression from the v2 rebuild
+
+v1 had live autocomplete against the full ~71-fragrance verified
+library when typing a name into any add flow. The v2 tab-bar rebuild
+dropped this from **Add a bottle you own** and **Want to try** — typing
+a name did nothing until you hit Add, then it silently matched (or
+didn't) in the background. Restored: both inputs now show a live
+dropdown of matching name/house pairs as you type (`searchLibrary`,
+name matches ranked above house-only matches), and picking one fills
+the field. The Start Test suggestion list — which the v2 design
+intentionally scoped to bottles already on the shelf or wishlist — now
+also folds in full-library matches, so typing a fragrance you don't
+own yet still surfaces it instead of coming up empty.
+
 ## Next pass: edit sheets (§6.1)
 
 Filled the gap flagged above and in the v2 shell pass itself (which
