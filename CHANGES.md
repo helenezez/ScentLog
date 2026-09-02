@@ -320,3 +320,85 @@ machinery: a test seeded 3 hours in the past with two checkpoints past
 due shows the header badge and both "Missed" rows correctly on a
 fresh page load, with zero timers armed for the two already-overdue
 ones and exactly one for the checkpoint still genuinely ahead.
+
+## Phase 3 — preference intelligence (fixes D2, D3)
+
+Three of the four sub-requirements turned out to already exist, built
+during the v2 shell pass (which front-loaded parts of several PRD
+phases). This pass verified those for real rather than trusting the
+earlier build note, fixed one real defect in the migration, and built
+the one genuinely missing piece.
+
+**3.1 signed weighting — already correct, now verified live, not just
+read.** `weightForReach()` already matched the PRD formula exactly
+(1-3 → -(4-reach), 4-6 → 0, 7-10 → reach-6) and the profile already
+rendered both "You gravitate toward" and "You tend to avoid." Built a
+Playwright case that rates a real collection item (Delina) 2/10 and
+confirms its notes (iris, lychee, rhubarb, rose, peony) land in
+`avoids` with negative weight and **none** of them leak into `likes`
+— the failure mode a naive implementation could still have even with
+the right formula, if the two lists were built independently instead
+of from one signed sum per note.
+
+**3.2 dislike bucket — already correct.** Passed on (the PRD's "Tried
+and passed") already existed with the six reason chips, and
+`buildProfile()` already applies a fixed -2 to a passed item's notes.
+Verified live: filing a passed-on fragrance with real library notes
+measurably pushes those notes into `avoids`. Passed items were never
+readable by the collection-only Recommended blockers logic, so "excluded
+from recommendations permanently" was already structurally true.
+
+**3.3 structured notes + migration — verified, and one real defect
+fixed.** Structured `{top, heart, base}` notes derived from prose via
+the vocabulary matcher already existed for both the library and every
+migrated collection item. What didn't hold up: `migrateIfNeeded()`
+branched on `scent-meta.schemaVersion` **and** a secondary check that
+inspected the collection's actual shape (`c[0].reach !== undefined`)
+as a defensive backstop. That's exactly the "guessing at shape"
+this pass was told not to do, and it wasn't just redundant — it was a
+latent data-loss bug: if `schemaVersion` were ever already current
+while a shape-check somehow disagreed, the shape-check would win and
+skip writing the version tag straight, masking the real signal. Now
+`migrateIfNeeded()` branches on `schemaVersion` alone. This is safe
+because `schemaVersion` is *only* ever written by this same function
+(unconditionally, every call) or by a successful import — both of
+which only fire once the data is actually in the current shape — so
+by construction the flag can't be stale relative to the data as long
+as nothing outside this file edits `localStorage` directly.
+
+Verified: (1) a v1-shaped collection (`gravitate`, no `reach`) migrates
+correctly and picks up real structured notes; (2) `scent-custom-library`
+is read during migration but never written or deleted, so a user's
+existing custom entries survive untouched; (3) a fragrance matching a
+custom-library entry gets its *real* prose-derived notes when added to
+the shelf, not fabricated ones; (4) idempotency — booting fresh against
+already-migrated, hand-edited data (`reach` changed from a UI action)
+does not re-run the transform and does not reset the edit. (Testing
+this with a plain page reload initially gave a false failure: Playwright
+re-fires its own `addInitScript` fixture on every navigation, which
+re-seeded the old v1 data underneath an already-`schemaVersion: 2` meta
+flag — a test-harness artifact, not an app bug. The real test boots a
+fresh browser context directly from a snapshot of already-migrated
+storage, which is what "reopening the app later" actually looks like.)
+
+**3.4 note pairing detection — built for real.** This was the one
+placeholder: the Pairings card always showed static "not enough yet"
+copy regardless of data. `computeNotePairings()` now looks only at
+positively-weighted (reach ≥ 7) bottles — "high-rated" per the PRD's
+own phrasing — counts every note pair's co-occurrence across them, and
+surfaces a pair once **at least 3** distinct bottles carry both notes,
+exactly the PRD's threshold. It goes one step further than a bare
+count: the PRD's own example phrasing ("less so on its own") is a
+*comparison* claim, not just a co-occurrence one, so for each
+qualifying pair it also checks bottles that carry the first note
+*without* the second — if those average a lower weight than the
+paired bottles, it earns that phrasing; if every bottle with the first
+note also has the second, it says so plainly instead of implying a
+comparison that isn't there; otherwise it states the pairing without
+overclaiming. Verified against the actual verified library (not
+synthetic data): adding all 71 built-in fragrances at reach 9 finds
+real qualifying pairs (musk+vanilla, amber+musk, etc.) and the
+Insights tab renders the computed sentence in place of the
+placeholder.
+
+Not touched: Phase 4, per instruction.

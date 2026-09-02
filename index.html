@@ -1219,15 +1219,17 @@ function readJSON(key, fallback) {
 // consolidated per-test dry-down text). Non-destructive: nothing is
 // dropped, only reshaped. Runs once; scent-meta.schemaVersion gates it.
 function migrateIfNeeded() {
+  // Branches purely on scent-meta.schemaVersion, never on inspecting the
+  // stored data's shape. schemaVersion is only ever written by this
+  // function (at the end, unconditionally) or by a successful import
+  // (handleImportFile), both of which only do so once the data actually
+  // is in the current shape — so by construction, if schemaVersion is
+  // already current, the data is too, and re-running the transform below
+  // would corrupt it (e.g. c.gravitate || 5 would stomp a real v2 reach
+  // value back down to 5 on every item). Trusting the flag is what makes
+  // this safe to call unconditionally on every load.
   const meta = readJSON(KEYS.meta, {});
-  if (meta.schemaVersion === SCHEMA_VERSION) return;
-
-  const hasV2Keys = localStorage.getItem(KEYS.collection) !== null && (() => {
-    const c = readJSON(KEYS.collection, []);
-    return c.length === 0 || c[0].reach !== undefined;
-  })();
-
-  if (!hasV2Keys) {
+  if (meta.schemaVersion !== SCHEMA_VERSION) {
     const oldCollection = readJSON(KEYS.collection, []);
     const oldEntries = readJSON(KEYS.entries, []);
     const oldWishlist = readJSON(KEYS.wishlist, []);
@@ -1380,6 +1382,55 @@ function buildProfile() {
     avoids: all.filter(x => x.w < 0).sort((a, b) => a.w - b.w).slice(0, 5),
     signalBottles: state.collection.filter(c => c.notes && weightForReach(c.reach) !== 0).length
   };
+}
+
+// Phase 3.4: note pairing detection. Only ever looks at positively-weighted
+// (reach >= 7) bottles — "high-rated" per the PRD's own phrasing — and only
+// surfaces a pair once at least 3 distinct bottles carry both notes
+// together, exactly the PRD's threshold. Beyond the count, it also checks
+// whether the note pulls its weight alone: if there are positive bottles
+// with note A but not note B, and those average a lower weight than the
+// A+B bottles, that's what earns the "less so on its own" phrasing: PRD's
+// own example is a comparison claim, not just a co-occurrence count.
+function computeNotePairings() {
+  const positive = state.collection
+    .filter(c => c.notes && weightForReach(c.reach) > 0)
+    .map(c => {
+      const all = ['top', 'heart', 'base'].reduce((a, k) => a.concat(c.notes[k] || []), []);
+      return { name: c.name, weight: weightForReach(c.reach), notes: Array.from(new Set(all)) };
+    });
+
+  const pairs = {};
+  positive.forEach(b => {
+    for (let i = 0; i < b.notes.length; i++) {
+      for (let j = i + 1; j < b.notes.length; j++) {
+        const [a, c] = [b.notes[i], b.notes[j]].sort();
+        const key = a + '|' + c;
+        if (!pairs[key]) pairs[key] = { a, b: c, bottles: [] };
+        pairs[key].bottles.push(b);
+      }
+    }
+  });
+
+  const qualifying = Object.values(pairs).filter(p => p.bottles.length >= 3);
+  qualifying.sort((x, y) => y.bottles.length - x.bottles.length);
+
+  return qualifying.slice(0, 3).map(p => {
+    const withBoth = p.bottles;
+    const avgWith = withBoth.reduce((s, b) => s + b.weight, 0) / withBoth.length;
+    const aAlone = positive.filter(b => b.notes.includes(p.a) && !b.notes.includes(p.b));
+    const avgAlone = aAlone.length ? aAlone.reduce((s, b) => s + b.weight, 0) / aAlone.length : null;
+    const A = titleCaseNote(p.a), B = titleCaseNote(p.b);
+    let text;
+    if (aAlone.length === 0) {
+      text = 'You consistently gravitate toward ' + A + ' when it is paired with ' + B + ' — every one of your top-rated bottles with ' + A + ' also has ' + B + '.';
+    } else if (avgAlone < avgWith) {
+      text = 'You consistently gravitate toward ' + A + ' when it is paired with ' + B + ', less so on its own.';
+    } else {
+      text = 'You consistently gravitate toward the combination of ' + A + ' and ' + B + ', across ' + withBoth.length + ' of your top bottles.';
+    }
+    return { text, count: withBoth.length };
+  });
 }
 
 function tempBandsFor(entries) {
@@ -1906,6 +1957,7 @@ function render_Profile() {
   const maxAvoid = prof.avoids.length ? Math.abs(prof.avoids[0].w) : 1;
   const likeWeights = prof.likes.map(x => x.w);
   const hasSpread = prof.signalBottles >= 2 && likeWeights.some(w => w !== likeWeights[0]);
+  const pairings = computeNotePairings();
 
   let body;
   if (!hasProfile) {
@@ -1938,7 +1990,9 @@ function render_Profile() {
       <div class="hair"></div>
       <div style="display:flex;flex-direction:column;gap:6px">
         <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;color:var(--sage)">Pairings</div>
-        <div style="font-size:12px;color:var(--soft);line-height:1.5">Pairings need three bottles that share a combination. You have ${prof.signalBottles} carrying signal, so there is nothing solid to report yet.</div>
+        ${pairings.length
+          ? pairings.map(p => `<div style="font-size:12px;color:var(--ink);line-height:1.5">${esc(p.text)}</div>`).join('')
+          : `<div style="font-size:12px;color:var(--soft);line-height:1.5">Pairings need three bottles that share a combination. You have ${prof.signalBottles} carrying signal, so there is nothing solid to report yet.</div>`}
       </div>
     `;
   }
