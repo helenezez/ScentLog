@@ -2290,10 +2290,15 @@ function wireEvents() {
     const acItem = t.closest('[data-ac-name]');
     if (acItem) {
       const forId = acItem.getAttribute('data-ac-for'), name = acItem.getAttribute('data-ac-name');
-      if (forId === 'shelfNameInput') state.shelfDraft = name;
-      else if (forId === 'wishInput') state.wishDraft = name;
       state.acOpenFor = null;
-      renderActiveTab(); return;
+      if (forId === 'shelfNameInput') {
+        state.collection.push(addCollectionItem(name));
+        state.shelfDraft = ''; persist(); renderActiveTab(); renderHeader();
+      } else if (forId === 'wishInput') {
+        state.wishlist.push({ id: newId('w'), name, house: '', note: '' });
+        state.wishDraft = ''; persist(); renderActiveTab(); renderHeader();
+      }
+      return;
     }
 
     const stub = t.closest('[data-stub]');
