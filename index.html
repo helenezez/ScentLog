@@ -1632,7 +1632,7 @@ function render_Shelf_list() {
           <div class="rank-circle" style="background:${isTop ? 'var(--gold)' : 'transparent'};color:${isTop ? 'var(--on-acc)' : 'var(--wine)'};border-color:${isTop ? 'var(--gold)' : 'var(--wine)'}">${i + 1}</div>
           <div class="shelf-body" data-toggle-shelf="${c.id}">
             <div class="shelf-name">${esc(c.name)}</div>
-            <div class="shelf-meta">${esc([c.house, c.conc, c.family].filter(Boolean).join(' · '))}</div>
+            <div class="shelf-meta">${esc([c.house, c.conc, c.family, LONG_SHORT[c.longevity] || c.longevity].filter(Boolean).join(' · '))}</div>
             <div class="shelf-cpw" style="color:${cpw ? 'var(--sage)' : 'var(--faint)'}">${cpw ? '$' + cpw.toFixed(0) + ' per wear · ' + w + ' logged' : (c.price ? 'No wears logged yet' : 'Add a price to see cost per wear')}</div>
           </div>
           <div class="shelf-reach">
