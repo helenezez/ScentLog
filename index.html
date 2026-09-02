@@ -341,6 +341,30 @@ const STORAGE_BANNER_DISMISSED_KEY = 'scent-storage-banner-dismissed';
 
 const SEASONS = ['spring', 'summer', 'fall', 'winter'];
 const OCCASIONS = ['day', 'night', 'work', 'date', 'formal', 'casual'];
+
+// Starting-point season guesses by fragrance family, standard perfume-community
+// pairings (fresh/citrus/aquatic skew warm-weather, oriental/woody/chypre skew
+// cool-weather). Only ever fills seasons a bottle doesn't already have tagged —
+// never overwrites a user's own choice.
+const FAMILY_SEASONS = {
+  'citrus': ['spring', 'summer'],
+  'green': ['spring', 'summer'],
+  'water (aquatic)': ['summer'],
+  'fresh spicy': ['spring', 'fall'],
+  'soft floral': ['spring'],
+  'floral': ['spring', 'summer'],
+  'fruity floral': ['spring', 'summer'],
+  'soft oriental': ['fall', 'winter'],
+  'oriental': ['fall', 'winter'],
+  'woody oriental': ['fall', 'winter'],
+  'woods': ['fall', 'winter'],
+  'mossy woods (chypre)': ['fall'],
+  'dry woods (leather)': ['fall', 'winter']
+};
+function suggestSeasons(family) {
+  const key = (family || '').trim().toLowerCase();
+  return FAMILY_SEASONS[key] ? FAMILY_SEASONS[key].slice() : [];
+}
 const PASS_REASONS = ['too sweet', 'too powdery', 'too sharp', 'did not last', 'too loud', 'just not me'];
 const CP_DEFS = [
   { mins: 0, label: 'On skin', ph: 'First thirty seconds. What hits first?' },
@@ -1203,7 +1227,7 @@ function migrateIfNeeded() {
         notes: lib ? lib.notes : null,
         prose: lib ? lib.prose : null,
         notesSource: lib ? 'library' : undefined,
-        seasons: [], occasions: [], sizeMl: null, fill: null, price: null
+        seasons: lib ? suggestSeasons(lib.family) : [], occasions: [], sizeMl: null, fill: null, price: null
       };
     });
 
@@ -1241,6 +1265,28 @@ function migrateIfNeeded() {
   }
 
   localStorage.setItem(KEYS.meta, JSON.stringify({ schemaVersion: SCHEMA_VERSION }));
+}
+
+// One-time backfill: fills in a season guess for any collection item that
+// has a known family but no seasons tagged yet (covers bottles added before
+// this feature existed). Never touches an item that already has a season
+// tagged, even one — that's a user's own choice, not a gap to fill. Gated
+// separately from schema migration so it still runs for accounts already
+// on schemaVersion 2.
+function backfillSeasonSuggestions() {
+  const meta = readJSON(KEYS.meta, {});
+  if (meta.seasonsSuggested) return;
+  const collection = readJSON(KEYS.collection, []);
+  let changed = false;
+  collection.forEach(c => {
+    if ((!c.seasons || c.seasons.length === 0) && c.family) {
+      const guess = suggestSeasons(c.family);
+      if (guess.length) { c.seasons = guess; changed = true; }
+    }
+  });
+  if (changed) localStorage.setItem(KEYS.collection, JSON.stringify(collection));
+  meta.seasonsSuggested = true;
+  localStorage.setItem(KEYS.meta, JSON.stringify(meta));
 }
 
 function loadState() {
@@ -2058,7 +2104,7 @@ function addCollectionItem(name) {
     reach: 5, longevity: lib ? lib.longevity : '',
     notes: lib ? lib.notes : null, prose: lib ? lib.prose : null,
     notesSource: lib ? 'library' : undefined,
-    seasons: [], occasions: [], sizeMl: null, fill: null, price: null
+    seasons: lib ? suggestSeasons(lib.family) : [], occasions: [], sizeMl: null, fill: null, price: null
   };
 }
 
@@ -2085,6 +2131,7 @@ function finishActiveTest() {
 function init() {
   buildLibrary();
   migrateIfNeeded();
+  backfillSeasonSuggestions();
   loadState();
   renderHeader();
   renderTabbar();
