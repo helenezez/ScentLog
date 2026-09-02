@@ -1159,6 +1159,22 @@ function displayName(name) {
   return DISPLAY_NAMES[key] || name;
 }
 
+// Real house only, never fabricated: prefer the linked shelf item's own
+// house (set from the same library lookup at add time), else fall back to
+// a fresh library lookup by name. Returns '' when neither knows it.
+function houseFor(name, ref) {
+  if (ref) {
+    const c = state.collection.find(x => x.id === ref);
+    if (c && c.house) return c.house;
+  }
+  const lib = lookupLibrary(name);
+  return lib ? lib.house : '';
+}
+
+function nameWithHouse(name, house) {
+  return house ? name + ' · ' + house : name;
+}
+
 function searchLibrary(query) {
   const q = (query || '').trim().toLowerCase();
   if (!q) return [];
@@ -1536,7 +1552,7 @@ function renderLiveTestCard() {
     <div class="card">
       <div style="padding:13px 14px;display:flex;flex-direction:column;gap:3px;border-bottom:1px solid var(--line)">
         <div style="display:flex;align-items:baseline;gap:7px">
-          <div style="font-size:14.5px;font-weight:600;color:var(--ink)">${esc(at.name)}</div>
+          <div style="font-size:14.5px;font-weight:600;color:var(--ink)">${esc(nameWithHouse(at.name, houseFor(at.name, at.ref)))}</div>
           <div style="font-size:10.5px;color:var(--faint)">started ${elapsedH}h ago</div>
         </div>
         <div style="font-size:11.5px;color:var(--soft)">${esc(ctxParts.join(' · '))}</div>
@@ -1588,7 +1604,7 @@ function renderTestedLog() {
       </div>
       ${filtered.map(e => state.editingEntry === e.id ? `
         <div class="card" style="border-left:3px solid ${bandColor(e.longevity)};padding:11px 13px;display:flex;flex-direction:column;gap:8px">
-          <div class="entry-name">${esc(e.name)}</div>
+          <div class="entry-name">${esc(nameWithHouse(e.name, houseFor(e.name, e.ref)))}</div>
           <div class="row-flex">
             <div class="f1"><input id="editDate" type="date" value="${esc(e.date || '')}"></div>
             <div class="f1"><input id="editSite" value="${esc(e.site || '')}" placeholder="Site"></div>
@@ -1614,7 +1630,7 @@ function renderTestedLog() {
       ` : `
         <div class="card entry" style="border-left-color:${bandColor(e.longevity)}">
           <div class="entry-top">
-            <div class="entry-name">${esc(e.name)}</div>
+            <div class="entry-name">${esc(nameWithHouse(e.name, houseFor(e.name, e.ref)))}</div>
             <div class="hdr-spacer"></div>
             <div class="entry-date">${esc(fmtShortDate(e.date))}</div>
           </div>
@@ -1658,7 +1674,7 @@ function computeWearPicks() {
       sm ? 'fits ' + state.season : (seasons.length ? 'tagged ' + seasons.join('/') + ', not ' + state.season : 'no season tagged'),
       om ? state.occasion + ' tagged' : (occasions.length ? 'tagged ' + occasions.join('/') + ', not ' + state.occasion : 'no occasion tagged')
     ].join(' · ');
-    return { name: c.name, reach: c.reach, fit: (sm ? 1 : 0) + (om ? 1 : 0), sm, om, why };
+    return { name: c.name, house: c.house, reach: c.reach, fit: (sm ? 1 : 0) + (om ? 1 : 0), sm, om, why };
   }).sort((a, b) => b.fit - a.fit || b.reach - a.reach);
   const picks = scored.slice(0, 3);
   const top = scored[0];
@@ -1685,7 +1701,7 @@ function render_WhatToWear() {
             <div style="display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:var(--r-ctl);background:var(--field)">
               <div style="font-size:11px;font-weight:700;font-variant-numeric:tabular-nums;color:${p.fit === 2 ? 'var(--sage)' : p.fit === 1 ? 'var(--gold)' : 'var(--faint)'};width:14px;flex:0 0 auto">${i + 1}</div>
               <div style="min-width:0;flex:1 1 auto;display:flex;flex-direction:column;gap:2px">
-                <div style="font-size:13px;font-weight:600;color:var(--ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(p.name)}</div>
+                <div style="font-size:13px;font-weight:600;color:var(--ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(nameWithHouse(p.name, p.house))}</div>
                 <div style="font-size:10.5px;color:var(--soft)">${esc(p.why)}</div>
               </div>
               <div style="flex:0 0 auto;display:flex;flex-direction:column;align-items:flex-end">
@@ -1832,7 +1848,7 @@ function render_WantToTry() {
           <div class="wish-item">
             <div class="f1">
               <div class="wish-name">${esc(w.name)}</div>
-              <div class="wish-sub">${esc(w.note || w.house || 'No note yet')}</div>
+              <div class="wish-sub">${esc(w.note || houseFor(w.name, null) || 'No note yet')}</div>
             </div>
             <button class="wish-test-btn" data-test-wish="${esc(w.name)}">Test it</button>
             <button class="x-btn" data-remove-wishlist="${w.id}" data-label="${esc(w.name)}">&times;</button>
@@ -1857,7 +1873,7 @@ function render_PassedOn() {
       <div style="display:flex;flex-direction:column;gap:8px">
         ${state.passed.map(p => `
           <div class="card pass-item">
-            <div class="pass-name">${esc(p.name)}</div>
+            <div class="pass-name">${esc(nameWithHouse(p.name, houseFor(p.name, null)))}</div>
             <div class="pass-reason">${esc(p.reason)}</div>
             <button class="x-btn" data-remove-passed="${p.id}" data-label="${esc(p.name)}">&times;</button>
           </div>
