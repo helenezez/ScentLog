@@ -1227,6 +1227,7 @@ let state = {
   acOpenFor: null,
   testName: '', testTemp: '', testRh: '',
   wishDraft: '', shelfDraft: '', passDraft: '', passReason: PASS_REASONS[0],
+  sampleDraft: '', sampleDecideByDraft: '',
   toast: null, undoSnapshot: null, importErr: '', libraryImportMsg: null
 };
 
@@ -1272,7 +1273,9 @@ function migrateIfNeeded() {
         notes: lib ? lib.notes : null,
         prose: lib ? lib.prose : null,
         notesSource: lib ? 'library' : undefined,
-        seasons: lib ? suggestSeasons(lib.family) : [], occasions: [], sizeMl: null, fill: null, price: null
+        seasons: lib ? suggestSeasons(lib.family) : [], occasions: [], sizeMl: null, fill: null, price: null,
+        purchaseDate: null, batchCode: null, fillHistory: [],
+        isSample: false, decideBy: null
       };
     });
 
@@ -1744,8 +1747,34 @@ function render_Test() {
 
 
 // ---- Shelf tab: what to wear, my shelf, want to try, passed on ----
+// PRD 4.3: "given fill history over time, estimate a depletion date." Fits a
+// simple linear regression (least squares) over every recorded fill reading
+// rather than just the first/last two points, so a noisy or uneven history
+// doesn't swing the estimate on one bad reading. Returns null when there's
+// not enough history yet, or when fill isn't actually trending down (a
+// single reading, or one that went up because the user corrected a typo,
+// shouldn't produce a countdown).
+function estimateDepletion(item) {
+  const hist = item.fillHistory || [];
+  if (hist.length < 2) return null;
+  const first = new Date(hist[0].date).getTime();
+  const pts = hist.map(h => ({ x: (new Date(h.date).getTime() - first) / 86400000, y: h.fill }));
+  const n = pts.length;
+  const sumX = pts.reduce((s, p) => s + p.x, 0), sumY = pts.reduce((s, p) => s + p.y, 0);
+  const sumXY = pts.reduce((s, p) => s + p.x * p.y, 0), sumXX = pts.reduce((s, p) => s + p.x * p.x, 0);
+  const denom = n * sumXX - sumX * sumX;
+  if (denom === 0) return null;
+  const slope = (n * sumXY - sumX * sumY) / denom;
+  if (slope >= -0.0001) return null;
+  const intercept = (sumY - slope * sumX) / n;
+  const dayZero = -intercept / slope;
+  const depletionDate = new Date(first + dayZero * 86400000);
+  const daysFromNow = Math.round((depletionDate.getTime() - Date.now()) / 86400000);
+  return { date: depletionDate.toISOString().slice(0, 10), daysFromNow };
+}
+
 function computeWearPicks() {
-  const scored = state.collection.map(c => {
+  const scored = state.collection.filter(c => !c.isSample).map(c => {
     const seasons = c.seasons || [], occasions = c.occasions || [];
     const sm = seasons.indexOf(state.season) >= 0, om = occasions.indexOf(state.occasion) >= 0;
     const why = [
@@ -1815,6 +1844,10 @@ function renderBottleEditForm(c) {
         <div class="f1"><input id="editSizeMl" value="${d.sizeMl != null ? d.sizeMl : ''}" placeholder="Size (ml)" inputmode="numeric"></div>
         <div class="f1"><input id="editFill" value="${d.fill != null ? d.fill : ''}" placeholder="Fill %" inputmode="numeric"></div>
       </div>
+      <div class="row-flex">
+        <div class="f1">${bottleFieldLabel('Purchase date')}<input id="editPurchaseDate" type="date" value="${esc(d.purchaseDate)}"></div>
+        <div class="f1">${bottleFieldLabel('Batch code')}<input id="editBatchCode" value="${esc(d.batchCode)}" placeholder="Batch code"></div>
+      </div>
       ${bottleFieldLabel('Seasons')}
       <div class="chip-row">${SEASONS.map(k => chip(k, d.seasons.includes(k), 'var(--sage)', `data-edit-season="${k}"`)).join('')}</div>
       ${bottleFieldLabel('Occasions')}
@@ -1834,13 +1867,15 @@ function renderBottleEditForm(c) {
 }
 
 function render_Shelf_list() {
-  const sorted = state.collection.slice().sort((a, b) => b.reach - a.reach);
+  const sorted = state.collection.filter(c => !c.isSample).sort((a, b) => b.reach - a.reach);
   const wears = {};
   state.entries.forEach(e => { if (e.ref) wears[e.ref] = (wears[e.ref] || 0) + 1; });
 
   const rows = sorted.map((c, i) => {
     const w = wears[c.id] || 0;
     const cpw = c.price && w > 0 ? (c.price / w) : null;
+    const est = estimateDepletion(c);
+    const runningLow = est && est.daysFromNow <= 60;
     const isTop = i === 0;
     const expanded = !!state.expanded[c.id];
     const tiers = c.notes ? [
@@ -1874,8 +1909,8 @@ function render_Shelf_list() {
         <div class="seg-row">${segs}</div>
         ${c.fill != null ? `
           <div class="fill-row">
-            <div class="fill-track"><div class="fill-bar" style="width:${c.fill}%;background:${c.fill < 25 ? 'var(--danger)' : 'var(--soft)'}"></div></div>
-            <div class="fill-text">${c.fill}%${c.sizeMl ? ' of ' + c.sizeMl + 'ml' : ''}</div>
+            <div class="fill-track"><div class="fill-bar" style="width:${c.fill}%;background:${runningLow ? 'var(--danger)' : c.fill < 25 ? 'var(--danger)' : 'var(--soft)'}"></div></div>
+            <div class="fill-text" style="${runningLow ? 'color:var(--danger);font-weight:650' : ''}">${c.fill}%${c.sizeMl ? ' of ' + c.sizeMl + 'ml' : ''}${runningLow ? ' · ' + (est.daysFromNow <= 0 ? 'likely empty' : 'out in ' + est.daysFromNow + 'd') : ''}</div>
           </div>
         ` : `<div style="height:10px"></div>`}
         ${expanded && state.editingBottle === c.id ? renderBottleEditForm(c) : expanded ? `
@@ -1902,7 +1937,7 @@ function render_Shelf_list() {
 
   return `
     <div>
-      ${sectionHeader({ glyph: GLYPH.shelf, title: 'My shelf', sub: 'Ranked by how often you actually reach for it', tint: 'var(--wine)', count: String(state.collection.length) })}
+      ${sectionHeader({ glyph: GLYPH.shelf, title: 'My shelf', sub: 'Ranked by how often you actually reach for it', tint: 'var(--wine)', count: String(sorted.length) })}
       <div class="row-flex" style="margin-bottom:9px">
         <div class="ac-wrap f1">
           <input id="shelfNameInput" value="${esc(state.shelfDraft)}" placeholder="Add a bottle you own" autocomplete="off">
@@ -1912,6 +1947,82 @@ function render_Shelf_list() {
       </div>
       <div style="display:flex;flex-direction:column;gap:9px">
         ${rows || `<div class="empty">Add the bottles you own to start ranking them.</div>`}
+      </div>
+    </div>
+  `;
+}
+
+// PRD 4.3: "surface bottles projected to run out within 60 days." A standalone
+// callout above the ranked list, not just an inline badge, so a bottle
+// running low is visible without expanding or scrolling past it.
+function render_RunningLow() {
+  const withEstimate = state.collection
+    .filter(c => !c.isSample)
+    .map(c => ({ c, est: estimateDepletion(c) }))
+    .filter(x => x.est && x.est.daysFromNow <= 60);
+  if (!withEstimate.length) return '';
+  withEstimate.sort((a, b) => a.est.daysFromNow - b.est.daysFromNow);
+  return `
+    <div class="card card-pad" style="display:flex;flex-direction:column;gap:8px;border-color:var(--danger);margin-bottom:9px">
+      <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;color:var(--danger)">Running low</div>
+      ${withEstimate.map(x => `
+        <div style="display:flex;justify-content:space-between;align-items:baseline;gap:10px;font-size:12px">
+          <div style="color:var(--ink);min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(nameWithHouse(x.c.name, x.c.house))}</div>
+          <div style="color:var(--danger);flex:0 0 auto;font-weight:650">${x.est.daysFromNow <= 0 ? 'likely empty' : x.est.daysFromNow + 'd left'} · ${esc(fmtShortDate(x.est.date))}</div>
+        </div>
+      `).join('')}
+    </div>
+  `;
+}
+
+// PRD 4.4: samples/decants as a separate item type (isSample), with an
+// optional decide-by date. Kept out of the ranked shelf and "what should I
+// wear" (those are for bottles you've committed to), surfaced here instead
+// with a nudge once the decide-by date has passed.
+function render_Samples() {
+  const samples = state.collection.filter(c => c.isSample);
+  const today = todayISO();
+  const sorted = samples.slice().sort((a, b) => {
+    const ao = a.decideBy && a.decideBy < today, bo = b.decideBy && b.decideBy < today;
+    if (ao !== bo) return ao ? -1 : 1;
+    if (a.decideBy && b.decideBy) return a.decideBy < b.decideBy ? -1 : 1;
+    if (a.decideBy) return -1;
+    if (b.decideBy) return 1;
+    return 0;
+  });
+  return `
+    <div>
+      ${sectionHeader({ glyph: GLYPH.wish, title: 'Samples', sub: 'Decants and samples, not yet a shelf commitment', tint: 'var(--gold)', count: String(samples.length) })}
+      <div style="display:flex;flex-direction:column;gap:8px">
+        ${sorted.map(s => {
+          const overdue = s.decideBy && s.decideBy < today;
+          return `
+          <div class="card card-pad" style="display:flex;flex-direction:column;gap:8px;${overdue ? 'border-color:var(--danger)' : ''}">
+            <div style="min-width:0">
+              <div style="font-size:13px;font-weight:600;color:var(--ink)">${esc(nameWithHouse(s.name, s.house))}</div>
+              <div style="font-size:11px;color:var(--soft)">${s.family ? esc(s.family) : 'No family on file'}</div>
+            </div>
+            <div class="row-flex" style="align-items:center;gap:8px">
+              <div style="font-size:10.5px;color:var(--faint);flex:0 0 auto">Decide by</div>
+              <input type="date" value="${s.decideBy || ''}" data-set-sample-decideby="${s.id}" style="flex:0 0 auto;width:auto;font-size:11.5px;padding:6px 8px">
+            </div>
+            ${overdue ? `<div style="font-size:11.5px;color:var(--danger);line-height:1.4">Past your decide-by date. Log a test or pass on it.</div>` : ''}
+            <div class="row-flex" style="gap:12px">
+              <div class="link-action" data-test-sample="${esc(s.name)}">Log a test</div>
+              <div class="link-action" data-sample-keep="${s.id}">Add to shelf</div>
+              <div class="link-faint" data-sample-pass="${s.id}" data-label="${esc(s.name)}">Pass on it</div>
+            </div>
+          </div>
+        `;}).join('')}
+        <div class="row-flex">
+          <div class="ac-wrap f1">
+            <input id="sampleNameInput" value="${esc(state.sampleDraft)}" placeholder="Add a sample or decant" autocomplete="off">
+            ${renderAcDropdown('sampleNameInput', state.sampleDraft)}
+          </div>
+          <input id="sampleDecideByInput" type="date" value="${esc(state.sampleDecideByDraft)}" style="flex:0 0 auto;width:auto" title="Decide by (optional)">
+          <button id="sampleAddBtn" style="padding:10px 14px;border:none;background:var(--gold);color:var(--on-acc);font-size:12.5px;font-weight:650;flex:0 0 auto">Add</button>
+        </div>
+        ${!samples.length ? `<div class="empty">No samples yet. Add a decant with an optional decide-by date, and you'll get a nudge here if you haven't decided by then.</div>` : ''}
       </div>
     </div>
   `;
@@ -1972,7 +2083,7 @@ function render_PassedOn() {
 }
 
 function render_Shelf() {
-  return render_Shelf_list() + render_WhatToWear() + render_WantToTry() + render_PassedOn();
+  return render_RunningLow() + render_Shelf_list() + render_Samples() + render_WhatToWear() + render_WantToTry() + render_PassedOn();
 }
 
 
@@ -2357,7 +2468,8 @@ function render_Data() {
       ${sectionHeader({ glyph: GLYPH.data, title: 'Your data', sub: 'Everything lives on this device. Back it up or you will lose it', tint: 'var(--wine)' })}
       <div class="card card-pad" style="display:flex;flex-direction:column;gap:12px">
         <div style="display:flex;flex-direction:column;gap:7px">
-          <div class="stat-row"><div class="stat-label">Bottles on the shelf</div><div class="stat-value">${state.collection.length}</div></div>
+          <div class="stat-row"><div class="stat-label">Bottles on the shelf</div><div class="stat-value">${state.collection.filter(c => !c.isSample).length}</div></div>
+          <div class="stat-row"><div class="stat-label">Samples</div><div class="stat-value">${state.collection.filter(c => c.isSample).length}</div></div>
           <div class="stat-row"><div class="stat-label">Tests logged</div><div class="stat-value">${state.entries.length}</div></div>
           <div class="stat-row"><div class="stat-label">Wishlist</div><div class="stat-value">${state.wishlist.length}</div></div>
           <div class="stat-row"><div class="stat-label">Passed on</div><div class="stat-value">${state.passed.length}</div></div>
@@ -2437,7 +2549,7 @@ function renderTabContent() {
 
 function renderActiveTab() {
   const active = document.activeElement;
-  const preserveIds = ['searchInput', 'testNameInput', 'shelfNameInput', 'wishInput'];
+  const preserveIds = ['searchInput', 'testNameInput', 'shelfNameInput', 'wishInput', 'sampleNameInput'];
   const preserveId = active && active.id && preserveIds.includes(active.id) ? active.id : null;
   const selStart = preserveId && 'selectionStart' in active ? active.selectionStart : null;
   renderTabContent();
@@ -2469,6 +2581,8 @@ function syncBottleDraftFromDOM() {
   if (g('editPrice')) d.price = g('editPrice').value;
   if (g('editSizeMl')) d.sizeMl = g('editSizeMl').value;
   if (g('editFill')) d.fill = g('editFill').value;
+  if (g('editPurchaseDate')) d.purchaseDate = g('editPurchaseDate').value;
+  if (g('editBatchCode')) d.batchCode = g('editBatchCode').value;
   if (g('editTop')) d.notesTop = g('editTop').value;
   if (g('editHeart')) d.notesHeart = g('editHeart').value;
   if (g('editBase')) d.notesBase = g('editBase').value;
@@ -2482,7 +2596,9 @@ function addCollectionItem(name) {
     reach: 5, longevity: lib ? lib.longevity : '',
     notes: lib ? lib.notes : null, prose: lib ? lib.prose : null,
     notesSource: lib ? 'library' : undefined,
-    seasons: lib ? suggestSeasons(lib.family) : [], occasions: [], sizeMl: null, fill: null, price: null
+    seasons: lib ? suggestSeasons(lib.family) : [], occasions: [], sizeMl: null, fill: null, price: null,
+    purchaseDate: null, batchCode: null, fillHistory: [],
+    isSample: false, decideBy: null
   };
 }
 
@@ -2636,6 +2752,7 @@ function wireEvents() {
         state.bottleDraft = {
           house: item.house || '', conc: item.conc || '', family: item.family || '',
           price: item.price, sizeMl: item.sizeMl, fill: item.fill,
+          purchaseDate: item.purchaseDate || '', batchCode: item.batchCode || '',
           seasons: (item.seasons || []).slice(), occasions: (item.occasions || []).slice(),
           notesTop: item.notes ? (item.notes.top || []).join(', ') : '',
           notesHeart: item.notes ? (item.notes.heart || []).join(', ') : '',
@@ -2674,7 +2791,21 @@ function wireEvents() {
         item.house = d.house.trim(); item.conc = d.conc.trim(); item.family = d.family.trim();
         item.price = d.price === '' || d.price == null ? null : Number(d.price);
         item.sizeMl = d.sizeMl === '' || d.sizeMl == null ? null : Number(d.sizeMl);
-        item.fill = d.fill === '' || d.fill == null ? null : Math.max(0, Math.min(100, Number(d.fill)));
+        item.purchaseDate = d.purchaseDate || null;
+        item.batchCode = d.batchCode ? d.batchCode.trim() : null;
+        const newFill = d.fill === '' || d.fill == null ? null : Math.max(0, Math.min(100, Number(d.fill)));
+        // PRD 4.3: track fill over time so a depletion date can be estimated.
+        // Only records a point when the value actually changed, and collapses
+        // same-day edits into one point rather than letting them skew the
+        // regression estimateDepletion() runs against.
+        if (newFill != null && newFill !== item.fill) {
+          if (!item.fillHistory) item.fillHistory = [];
+          const today = todayISO();
+          const last = item.fillHistory[item.fillHistory.length - 1];
+          if (last && last.date === today) last.fill = newFill;
+          else item.fillHistory.push({ date: today, fill: newFill });
+        }
+        item.fill = newFill;
         item.seasons = d.seasons; item.occasions = d.occasions;
         const notesEditable = !item.notes || item.notesSource === 'user';
         if (notesEditable) {
@@ -2698,6 +2829,40 @@ function wireEvents() {
       if (!name) return;
       state.collection.push(addCollectionItem(name));
       state.shelfDraft = ''; state.acOpenFor = null; persist(); renderActiveTab(); renderHeader(); return;
+    }
+
+    if (t.closest('#sampleAddBtn')) {
+      const el = document.getElementById('sampleNameInput'), dateEl = document.getElementById('sampleDecideByInput');
+      const name = el ? el.value.trim() : '';
+      if (!name) return;
+      const item = addCollectionItem(name);
+      item.isSample = true;
+      item.decideBy = dateEl && dateEl.value ? dateEl.value : null;
+      state.collection.push(item);
+      state.sampleDraft = ''; state.sampleDecideByDraft = ''; state.acOpenFor = null;
+      persist(); renderActiveTab(); renderHeader(); return;
+    }
+    const testSample = t.closest('[data-test-sample]');
+    if (testSample) { state.testName = testSample.getAttribute('data-test-sample'); switchTab('test'); return; }
+    const sampleKeep = t.closest('[data-sample-keep]');
+    if (sampleKeep) {
+      const item = state.collection.find(c => c.id === sampleKeep.getAttribute('data-sample-keep'));
+      if (item) { item.isSample = false; persist(); renderActiveTab(); renderHeader(); }
+      return;
+    }
+    const samplePass = t.closest('[data-sample-pass]');
+    if (samplePass) {
+      const id = samplePass.getAttribute('data-sample-pass'), label = samplePass.getAttribute('data-label');
+      const item = state.collection.find(c => c.id === id);
+      if (item) {
+        const before = snapshot();
+        state.collection = state.collection.filter(c => c.id !== id);
+        state.passed.push({ id: newId('p'), name: item.name, reason: PASS_REASONS[0], notes: item.notes || null });
+        persist();
+        showToast(label + ' passed on', before);
+        renderActiveTab(); renderHeader();
+      }
+      return;
     }
 
     const testWish = t.closest('[data-test-wish]');
@@ -2733,6 +2898,13 @@ function wireEvents() {
       } else if (forId === 'wishInput') {
         state.wishlist.push({ id: newId('w'), name, house: '', note: '' });
         state.wishDraft = ''; persist(); renderActiveTab(); renderHeader();
+      } else if (forId === 'sampleNameInput') {
+        const dateEl = document.getElementById('sampleDecideByInput');
+        const item = addCollectionItem(name);
+        item.isSample = true;
+        item.decideBy = dateEl && dateEl.value ? dateEl.value : null;
+        state.collection.push(item);
+        state.sampleDraft = ''; persist(); renderActiveTab(); renderHeader();
       }
       return;
     }
@@ -2767,6 +2939,8 @@ function wireEvents() {
     else if (id === 'cpDraftInput') { state.cpDraft = e.target.value; }
     else if (id === 'shelfNameInput') { state.shelfDraft = e.target.value; state.acOpenFor = 'shelfNameInput'; renderActiveTab(); }
     else if (id === 'wishInput') { state.wishDraft = e.target.value; state.acOpenFor = 'wishInput'; renderActiveTab(); }
+    else if (id === 'sampleNameInput') { state.sampleDraft = e.target.value; state.acOpenFor = 'sampleNameInput'; renderActiveTab(); }
+    else if (id === 'sampleDecideByInput') { state.sampleDecideByDraft = e.target.value; }
     else if (id === 'passNameInput') { state.passDraft = e.target.value; }
   });
   document.addEventListener('change', (e) => {
@@ -2779,6 +2953,9 @@ function wireEvents() {
       e.target.value = '';
     } else if (e.target.id === 'passReasonSelect') {
       state.passReason = e.target.value;
+    } else if (e.target.hasAttribute('data-set-sample-decideby')) {
+      const item = state.collection.find(c => c.id === e.target.getAttribute('data-set-sample-decideby'));
+      if (item) { item.decideBy = e.target.value || null; persist(); renderActiveTab(); }
     }
   });
 }

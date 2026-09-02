@@ -525,3 +525,67 @@ trip reproduces `source` correctly for both built-in-default and
 freshly-imported entries. Screenshots confirm the new Library card
 renders correctly in both light and dark mode, including the error
 state.
+
+## Phase 4 — bottle management
+
+Implements PRD 4.1–4.4 (`Phase 4 is done when: a bottle with a price
+and three logged wears displays an accurate cost per wear`) in full.
+4.1's price/size/fill and 4.2's cost-per-wear already existed from
+earlier work on the bottle edit sheet; this pass added the remaining
+4.1 fields, and built 4.3 and 4.4 from scratch.
+
+**4.1 extended fields.** Added `purchaseDate` and `batchCode` to the
+collection item schema and the bottle edit sheet, alongside the
+existing price/size/fill row. Neither is surfaced anywhere but the
+edit sheet — the PRD doesn't ask for them on the card, and there's no
+room on it that isn't already earning its place.
+
+**4.2 cost per wear.** Verified rather than rebuilt: `price / wears`
+(wears = count of Tested-log entries referencing the bottle) already
+renders on the shelf card once both are present, exactly as specced.
+
+**4.3 fill tracking + depletion estimate.** Every time a saved fill
+value actually changes, a `{date, fill}` point is appended to the
+item's `fillHistory` (same-day edits collapse into one point, so
+re-checking a bottle twice in one sitting can't distort the trend).
+`estimateDepletion()` fits a linear regression across every recorded
+point (not just first/last, so one off reading doesn't swing the
+result), projects forward to where the line crosses 0%, and returns a
+date plus days-from-now — or `null` when there are fewer than two
+points, or when the trend isn't actually declining (a fill that went
+up, e.g. a corrected typo, must never produce a countdown). Bottles
+projected to empty within 60 days get a "running low" badge inline
+on the shelf card (colors the fill bar and text danger-red) and are
+also rolled up into a standalone callout above the ranked list —
+tested that a flat or single-point history correctly produces no
+estimate, and that a genuinely declining history produces one in a
+sane range.
+
+**4.4 sample tracking.** Collection items gained `isSample` and an
+optional `decideBy` date. Samples are a parallel item type sharing
+the same storage array and fields (so a sample can still be tested,
+rated, and carry real notes toward the profile) but are filtered out
+of the ranked "My shelf" list and the "What should I wear" picks —
+those are for bottles already committed to, not a decant still being
+evaluated. They get their own "Samples" section instead: sorted
+overdue-first, each with an editable decide-by date, and a nudge
+("Past your decide-by date. Log a test or pass on it.") plus a
+danger-colored border once that date has passed, matching the PRD's
+wording almost verbatim. "Log a test" hands off to the Test tab the
+same way Want to try's "Test it" does; "Add to shelf" clears
+`isSample` and the item joins the ranked list; "Pass on it" moves it
+into Passed on with an undo toast, reusing the same removal pattern
+as everywhere else in the app.
+
+Verified with Playwright: purchase date/batch code round-trip through
+the edit sheet; fill history accumulates correctly across edits and
+feeds a depletion estimate that lands in the expected range, while a
+flat or single-reading history correctly abstains; a sample is
+excluded from both the ranked shelf list and What should I wear but
+still shows up correctly once converted; the overdue nudge renders;
+Pass on it and Add to shelf both mutate state correctly; and the
+existing backup export/import carries every new field through
+untouched, since both already serialize the collection generically.
+Screenshots confirm the Running Low callout, Samples section
+(including the overdue state), and the extended edit sheet all render
+correctly in both color schemes.
