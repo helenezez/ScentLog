@@ -385,6 +385,18 @@ function bandFromHours(h) {
   return LONG_ALL;
 }
 
+// The 13 families and 4 longevity bands the library format guide defines.
+// A library import row must match one of these exactly (see validateLibraryRows).
+const VALID_FAMILIES = [
+  'Soft floral', 'Floral', 'Fruity floral',
+  'Soft oriental', 'Oriental', 'Woody oriental',
+  'Woods', 'Mossy woods (chypre)', 'Dry woods (leather)',
+  'Citrus', 'Green', 'Water (aquatic)', 'Fresh spicy'
+];
+const VALID_LONGEVITY = [LONG_FAST, LONG_MOD, LONG_LONG, LONG_ALL];
+const LIBRARY_REQUIRED_FIELDS = ['key', 'name', 'house', 'conc', 'family', 'cp0', 'cp30', 'cp2h', 'cp6h', 'longevity', 'source'];
+const LIBRARY_SCHEMA_VERSION = 1;
+
 const GLYPH = {
   test: 'M12 7v5l3 2M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18z',
   log: 'M11 19a8 8 0 1 0 0-16 8 8 0 0 0 0 16zM21 21l-4.3-4.3',
@@ -1126,6 +1138,9 @@ function structureLibraryEntry(raw) {
   return {
     house: raw.house || '', conc: raw.conc || '', family: raw.family || '',
     longevity: raw.longevity || '',
+    // Not shown anywhere in the UI, but carried through so it survives a
+    // library export/import round trip (PRD: library import/export, source field).
+    source: raw.source || '',
     prose: { cp0: raw.cp0 || '', cp30: raw.cp30 || '', cp2h: raw.cp2h || '', cp6h: raw.cp6h || '' },
     notes: {
       top: extractNotes(raw.cp0),
@@ -1138,11 +1153,23 @@ function structureLibraryEntry(raw) {
 let LIBRARY = {};
 function buildLibrary() {
   LIBRARY = {};
-  for (const key in BUILTIN_LIBRARY) LIBRARY[key] = structureLibraryEntry(BUILTIN_LIBRARY[key]);
+  for (const key in BUILTIN_LIBRARY) {
+    LIBRARY[key] = structureLibraryEntry(BUILTIN_LIBRARY[key]);
+    // BUILTIN_LIBRARY entries don't carry their own source field (they
+    // predate the library import/export feature); they are, by construction,
+    // the original 71 verified entries, so default them for export purposes.
+    if (!LIBRARY[key].source) LIBRARY[key].source = 'v1 built-in (verified)';
+  }
   try {
     const raw = localStorage.getItem('scent-custom-library');
     const custom = raw ? JSON.parse(raw) : {};
-    for (const key in custom) LIBRARY[key] = structureLibraryEntry(custom[key]);
+    for (const key in custom) {
+      LIBRARY[key] = structureLibraryEntry(custom[key]);
+      // Unlike BUILTIN_LIBRARY, custom entries (added via library import)
+      // carry their own display name rather than relying on a hand-authored
+      // DISPLAY_NAMES entry, so every lookup of this key renders correctly.
+      if (custom[key].name) DISPLAY_NAMES[key] = custom[key].name;
+    }
   } catch (e) {}
 }
 
@@ -1200,7 +1227,7 @@ let state = {
   acOpenFor: null,
   testName: '', testTemp: '', testRh: '',
   wishDraft: '', shelfDraft: '', passDraft: '', passReason: PASS_REASONS[0],
-  toast: null, undoSnapshot: null, importErr: ''
+  toast: null, undoSnapshot: null, importErr: '', libraryImportMsg: null
 };
 
 function newId(prefix) { return (prefix || '') + Date.now().toString(36) + Math.random().toString(36).slice(2, 7); }
@@ -2145,10 +2172,186 @@ function backupReminderText() {
     : "You've logged some data and haven't backed it up yet. Export a copy now.";
 }
 
+// ---- Library import/export: merges into the custom library (scent-custom-library),
+// distinct from the backup import above, which replaces the whole app state. ----
+
+// A real CSV parser (state machine over characters), not text.split(','):
+// several checkpoint descriptions in the library data contain commas inside
+// quoted fields ("Rich tobacco-vanilla heart, dried fruit undertone" as one
+// field), which a naive split would break across two columns. Handles quoted
+// fields, doubled "" as an escaped quote, and both \n and \r\n line endings.
+// See CHANGES.md for why this was written by hand instead of adding a dependency.
+function parseCSV(text) {
+  const rows = [];
+  let row = [], field = '', inQuotes = false;
+  let i = 0;
+  const len = text.length;
+  while (i < len) {
+    const c = text[i];
+    if (inQuotes) {
+      if (c === '"') {
+        if (text[i + 1] === '"') { field += '"'; i += 2; continue; }
+        inQuotes = false; i++; continue;
+      }
+      field += c; i++; continue;
+    }
+    if (c === '"') { inQuotes = true; i++; continue; }
+    if (c === ',') { row.push(field); field = ''; i++; continue; }
+    if (c === '\r') { i++; continue; }
+    if (c === '\n') { row.push(field); rows.push(row); row = []; field = ''; i++; continue; }
+    field += c; i++;
+  }
+  if (field.length > 0 || row.length > 0) { row.push(field); rows.push(row); }
+  return rows.filter(r => !(r.length === 1 && r[0].trim() === ''));
+}
+
+function csvRowsToObjects(rows) {
+  const header = rows[0].map(h => h.trim().toLowerCase());
+  return rows.slice(1).map((r, idx) => {
+    const obj = { __row: idx + 2, __unit: 'row' };
+    header.forEach((h, i) => { obj[h] = (r[i] !== undefined ? r[i] : '').trim(); });
+    return obj;
+  });
+}
+
+// Validates in memory only; nothing is written to storage here. Returns the
+// rows that pass (ready to merge) and a per-row failure list so bad rows are
+// reported, not silently dropped.
+function validateLibraryRows(objs) {
+  const valid = [];
+  const failures = [];
+  const seenKeys = new Set();
+  objs.forEach(obj => {
+    const unit = obj.__unit || 'entry';
+    const label = unit + ' ' + obj.__row;
+    for (const f of LIBRARY_REQUIRED_FIELDS) {
+      if (!obj[f] || !String(obj[f]).trim()) {
+        failures.push({ row: obj.__row, unit, reason: 'missing ' + f, label: label + ' missing ' + f });
+        return;
+      }
+    }
+    const family = String(obj.family).trim();
+    if (!VALID_FAMILIES.includes(family)) {
+      failures.push({ row: obj.__row, unit, reason: 'invalid family', label: label + ' invalid family' });
+      return;
+    }
+    const longevity = String(obj.longevity).trim();
+    if (!VALID_LONGEVITY.includes(longevity)) {
+      failures.push({ row: obj.__row, unit, reason: 'invalid longevity', label: label + ' invalid longevity' });
+      return;
+    }
+    const key = String(obj.key).trim().toLowerCase();
+    if (seenKeys.has(key)) {
+      failures.push({ row: obj.__row, unit, reason: 'duplicate key', label: label + ' duplicate key' });
+      return;
+    }
+    seenKeys.add(key);
+    valid.push({
+      key, name: String(obj.name).trim(), house: String(obj.house).trim(), conc: String(obj.conc).trim(),
+      family, cp0: String(obj.cp0).trim(), cp30: String(obj.cp30).trim(),
+      cp2h: String(obj.cp2h).trim(), cp6h: String(obj.cp6h).trim(),
+      longevity, source: String(obj.source).trim()
+    });
+  });
+  return { valid, failures };
+}
+
+function isValidLibraryBundle(b) {
+  return !!(b && typeof b === 'object' && Array.isArray(b.library));
+}
+
+function handleLibraryImportFile(file) {
+  state.libraryImportMsg = null;
+  const reader = new FileReader();
+  reader.onload = () => {
+    const text = String(reader.result);
+    const looksCSV = /\.csv$/i.test(file.name) || (!/\.json$/i.test(file.name) && text.trim()[0] !== '{');
+    let objs;
+    if (looksCSV) {
+      const rows = parseCSV(text);
+      if (rows.length < 2) {
+        state.libraryImportMsg = { text: "That doesn't look like a library CSV. Nothing was changed.", isError: true };
+        renderActiveTab(); return;
+      }
+      const header = rows[0].map(h => h.trim().toLowerCase());
+      const missingCols = LIBRARY_REQUIRED_FIELDS.filter(f => !header.includes(f));
+      if (missingCols.length) {
+        state.libraryImportMsg = { text: 'That CSV is missing required columns (' + missingCols.join(', ') + '). Nothing was changed.', isError: true };
+        renderActiveTab(); return;
+      }
+      objs = csvRowsToObjects(rows);
+    } else {
+      let bundle;
+      try { bundle = JSON.parse(text); }
+      catch (e) { state.libraryImportMsg = { text: "That file isn't valid JSON. Nothing was changed.", isError: true }; renderActiveTab(); return; }
+      if (!isValidLibraryBundle(bundle)) {
+        state.libraryImportMsg = { text: "That doesn't look like a Scent Log library file. Nothing was changed.", isError: true };
+        renderActiveTab(); return;
+      }
+      objs = bundle.library.map((r, idx) => Object.assign({ __row: idx + 1, __unit: 'entry' }, r));
+    }
+
+    const { valid, failures } = validateLibraryRows(objs);
+    if (!valid.length) {
+      state.libraryImportMsg = {
+        text: failures.length
+          ? 'Nothing imported. ' + failures.length + (failures.length === 1 ? ' row failed: ' : ' rows failed: ') + failures.map(f => f.label).join(', ') + '.'
+          : 'That file has no entries. Nothing was changed.',
+        isError: true
+      };
+      renderActiveTab(); return;
+    }
+
+    // Validation is done; only now does anything touch storage, and it's a
+    // single write, not one per row (PRD: validate before writing anything).
+    let custom;
+    try { custom = JSON.parse(localStorage.getItem('scent-custom-library') || '{}'); }
+    catch (e) { custom = {}; }
+    valid.forEach(v => {
+      custom[v.key] = {
+        name: v.name, house: v.house, conc: v.conc, family: v.family,
+        cp0: v.cp0, cp30: v.cp30, cp2h: v.cp2h, cp6h: v.cp6h,
+        longevity: v.longevity, source: v.source
+      };
+    });
+    localStorage.setItem('scent-custom-library', JSON.stringify(custom));
+    buildLibrary();
+
+    let msg = 'Imported ' + valid.length + ' ' + (valid.length === 1 ? 'entry' : 'entries') + '.';
+    if (failures.length) {
+      msg += ' ' + failures.length + (failures.length === 1 ? ' row skipped: ' : ' rows skipped: ') + failures.map(f => f.label).join(', ') + '.';
+    }
+    state.libraryImportMsg = { text: msg, isError: false };
+    renderActiveTab(); renderHeader();
+  };
+  reader.onerror = () => { state.libraryImportMsg = { text: 'Could not read that file. Nothing was changed.', isError: true }; renderActiveTab(); };
+  reader.readAsText(file);
+}
+
+function doLibraryExport() {
+  const library = Object.keys(LIBRARY).map(key => {
+    const e = LIBRARY[key];
+    return {
+      key, name: displayName(key), house: e.house, conc: e.conc, family: e.family,
+      cp0: e.prose.cp0, cp30: e.prose.cp30, cp2h: e.prose.cp2h, cp6h: e.prose.cp6h,
+      longevity: e.longevity, source: e.source || ''
+    };
+  });
+  const bundle = { schemaVersion: LIBRARY_SCHEMA_VERSION, library };
+  const blob = new Blob([JSON.stringify(bundle, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = 'scent-log-library-' + todayFilenameDate() + '.json';
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
 function render_Data() {
   const lastExport = localStorage.getItem(LAST_EXPORT_KEY);
   const reminder = backupReminderText();
   const bannerDismissed = !!localStorage.getItem(STORAGE_BANNER_DISMISSED_KEY);
+  let customCount = 0;
+  try { customCount = Object.keys(JSON.parse(localStorage.getItem('scent-custom-library') || '{}')).length; } catch (e) {}
   return `
     <div>
       ${sectionHeader({ glyph: GLYPH.data, title: 'Your data', sub: 'Everything lives on this device. Back it up or you will lose it', tint: 'var(--wine)' })}
@@ -2167,6 +2370,20 @@ function render_Data() {
         <input type="file" id="importFile" accept=".json,application/json" class="hide">
         <div style="font-size:11px;color:var(--faint);line-height:1.5">Clearing your browser data deletes the lot with no warning. Export before you clear anything, before an OS update, and after any big logging session.</div>
         ${state.importErr ? `<div class="import-note" style="border-color:var(--danger);color:var(--danger)">${esc(state.importErr)}</div>` : ''}
+      </div>
+    </div>
+    <div>
+      ${sectionHeader({ glyph: GLYPH.data, title: 'Library', sub: 'Verified fragrance data, separate from your own bottles', tint: 'var(--sage)' })}
+      <div class="card card-pad" style="display:flex;flex-direction:column;gap:12px">
+        <div style="display:flex;flex-direction:column;gap:7px">
+          <div class="stat-row"><div class="stat-label">Your library entries</div><div class="stat-value">${customCount}</div></div>
+        </div>
+        <div class="hair"></div>
+        <button class="btn-line" id="libraryExportBtn">Export library</button>
+        <button class="btn-line" id="libraryImportBtn">Import library</button>
+        <input type="file" id="libraryImportFile" accept=".json,.csv,application/json,text/csv" class="hide">
+        <div style="font-size:11px;color:var(--faint);line-height:1.5">Import merges by key: existing entries are updated, new ones are added, nothing else is touched. Accepts the library CSV or JSON format. Bad rows are skipped and reported, not silently dropped.</div>
+        ${state.libraryImportMsg ? `<div class="import-note" style="${state.libraryImportMsg.isError ? 'border-color:var(--danger);color:var(--danger)' : ''}">${esc(state.libraryImportMsg.text)}</div>` : ''}
       </div>
     </div>
     <div class="banner ${bannerDismissed ? 'hide' : ''}" id="storageBanner">
@@ -2525,6 +2742,8 @@ function wireEvents() {
 
     if (t.closest('#exportBtn') || t.closest('#reminderExportBtn')) { doExport(); return; }
     if (t.closest('#importBtn')) { const f = document.getElementById('importFile'); if (f) f.click(); return; }
+    if (t.closest('#libraryExportBtn')) { doLibraryExport(); return; }
+    if (t.closest('#libraryImportBtn')) { const f = document.getElementById('libraryImportFile'); if (f) f.click(); return; }
     if (t.closest('#storageBannerDismiss')) {
       localStorage.setItem(STORAGE_BANNER_DISMISSED_KEY, '1');
       const b = document.getElementById('storageBanner'); if (b) b.classList.add('hide');
@@ -2554,6 +2773,10 @@ function wireEvents() {
     if (e.target.id === 'importFile') {
       const file = e.target.files && e.target.files[0];
       if (file) handleImportFile(file);
+    } else if (e.target.id === 'libraryImportFile') {
+      const file = e.target.files && e.target.files[0];
+      if (file) handleLibraryImportFile(file);
+      e.target.value = '';
     } else if (e.target.id === 'passReasonSelect') {
       state.passReason = e.target.value;
     }

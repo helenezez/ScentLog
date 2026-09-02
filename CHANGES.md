@@ -402,3 +402,126 @@ Insights tab renders the computed sentence in place of the
 placeholder.
 
 Not touched: Phase 4, per instruction.
+
+## Library import/export (Data section)
+
+Added a second import/export pair to the Data tab, alongside the
+existing backup import/export, for the verified fragrance *library*
+specifically (house/concentration/family/checkpoints/longevity/source
+per fragrance) rather than a user's own bottles, tests, and ratings.
+The two are deliberately kept separate and behave differently on
+purpose:
+
+- **Backup import** (existing) replaces the whole app state wholesale —
+  it's a restore, not a merge.
+- **Library import** (new) merges into `scent-custom-library` by `key`:
+  an existing key gets its fields overwritten with the imported row,
+  a new key gets added, and every key not present in the imported file
+  is left exactly as it was. Nothing about a user's own collection,
+  tests, wishlist, or passed-on list is touched by this at all.
+
+**Accepted formats.** Both `.json` (`{schemaVersion, library: [...]}`,
+matching the attached format guide/export shape) and `.csv` (column
+headers matching the guide's field names, case-insensitive, any
+order) are accepted. Format is detected from the file extension, with
+a fallback content sniff (does the trimmed text start with `{`) for a
+misnamed file.
+
+**A real CSV parser, not `split(',')`.** Several checkpoint fields in
+the attached library data have commas inside a single field (e.g.
+`"Warm, skin-like amber and cedar, less sweet than the opening"` for
+Baccarat Rouge 540's `cp2h`) — a naive comma-split corrupts these into
+extra phantom columns and shifts every field after them. Writing a
+minimal CSV state machine by hand (`parseCSV()`) was the right call
+here over pulling in a parsing library: the grammar this app actually
+needs is small and fixed (comma-delimited, double-quote-quoted fields,
+`""` as an escaped quote inside a quoted field, `\r\n` or `\n` line
+endings) and the PRD's hard constraint is zero runtime dependencies in
+a single HTML file, so a dependency was never on the table regardless
+of complexity. The parser is a straightforward character-by-character
+state machine (in-quotes vs. not, per RFC 4180) that builds rows of
+raw string cells; a second pass (`csvRowsToObjects()`) turns those
+into field-keyed objects using the header row, so column order in the
+source file doesn't matter as long as the required column names are
+present.
+
+**Validate everything before writing anything.** `validateLibraryRows()`
+runs entirely in memory against the full parsed set — no row is
+written to `localStorage` until every row has been checked — then
+`handleLibraryImportFile()` performs exactly one `localStorage.setItem`
+merging every valid row into the existing custom library object at
+once. This means a mid-import crash or a bad row 60 rows in can't ever
+leave the stored library half-updated. Per row, a required column
+being empty (`key`, `name`, `house`, `conc`, `family`, all four
+checkpoints, `longevity`, `source`), a `family` not matching one of
+the 13 values in `VALID_FAMILIES`, a `longevity` not matching one of
+the 4 bands in `VALID_LONGEVITY`, or a `key` repeated elsewhere in the
+same import file (checked against keys seen earlier in the same file,
+not against what's already stored — those are legitimate updates) all
+disqualify that one row without aborting the rest. A CSV missing a
+required column entirely is checked before any row parsing and aborts
+the whole import (there's no per-row recovery from a column that
+doesn't exist).
+
+**Reporting.** Every rejected row is reported by position, not
+silently dropped: `"Imported 34 entries. 3 rows skipped: row 12
+invalid family, row 19 missing house, row 40 duplicate key."` — the
+exact pattern asked for. CSV positions are true spreadsheet row
+numbers (header is row 1, so the first data row is row 2); JSON
+positions are reported as `entry N` (1-indexed into the `library`
+array) since a JSON array has no header row to offset against, and
+calling it a "row" there would be misleading.
+
+**Malformed file: change nothing, say so.** Unparseable JSON syntax,
+a JSON body without a `library` array, or a CSV with fewer than 2
+rows or a missing required column all stop before touching storage
+and report the problem — same pattern as the existing backup import's
+"that doesn't look like a Scent Log backup" handling. This is
+different from the bad-row case above: a structurally malformed file
+can't be partially trusted, but a well-formed file with some invalid
+rows can still deliver its valid rows.
+
+**The `source` field.** Added to the library schema
+(`structureLibraryEntry()`, both `BUILTIN_LIBRARY` and
+`scent-custom-library`) so it round-trips through import and export
+untouched, per the format guide's provenance requirement (never trust
+a note pyramid whose origin can't be pointed to). It is not surfaced
+anywhere in the UI, exactly as asked — it exists purely so a future
+export carries forward where each entry's data actually came from.
+`BUILTIN_LIBRARY`'s 71 entries predate this field and don't carry it
+inline; `buildLibrary()` defaults them to `'v1 built-in (verified)'`
+at load time so an export of an untouched install still reproduces
+the same shape as the attached reference file, with every entry
+correctly attributed.
+
+**Display names for imported entries.** Existing custom-library
+entries had no path to a properly-cased display name — the app's
+`DISPLAY_NAMES` map is hand-authored only for the 71 built-in
+fragrances, and every other lookup fell back to the raw (lowercase)
+storage key. A newly imported fragrance would otherwise show up as
+`new custom scent` instead of `New Custom Scent` everywhere its name
+is displayed. `buildLibrary()` now also writes `DISPLAY_NAMES[key] =
+custom[key].name` for every custom-library entry it loads, so this
+works automatically for anything that comes in through the new
+import — not scope creep, just what "merge in real data" requires to
+actually render correctly.
+
+**Library export** (`doLibraryExport()`) writes the current combined
+library (built-ins + custom, by key) back out as
+`{schemaVersion, library: [...]}` in the exact shape of the attached
+reference file — verified directly against it: round-tripping the
+71-entry file back out reproduces every field, including `source`.
+
+Verified with Playwright against the attached 71-entry JSON and a CSV
+generated from the same data (every field quoted, matching a real
+spreadsheet export): full-file import both ways, a merge that updates
+one existing key's checkpoint text and adds one brand-new key while
+leaving 70 others untouched, a mixed-validity file (2 good rows, 1
+each of missing-field / bad-family / bad-longevity / duplicate-key,
+reported individually), a syntactically-broken JSON file, a
+structurally-wrong JSON file (no `library` array), and a CSV missing
+a required column — all behave as specified, and the export round
+trip reproduces `source` correctly for both built-in-default and
+freshly-imported entries. Screenshots confirm the new Library card
+renders correctly in both light and dark mode, including the error
+state.
