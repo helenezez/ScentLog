@@ -1176,7 +1176,7 @@ function searchLibrary(query) {
 // ---- state ----
 let state = {
   collection: [], entries: [], wishlist: [], passed: [], activeTest: null,
-  tab: 'test', expanded: {}, search: '', longFilter: 'all',
+  tab: 'shelf', expanded: {}, search: '', longFilter: 'all',
   season: 'summer', occasion: 'date',
   editingCp: null, cpDraft: '',
   editingBottle: null, bottleDraft: null,
@@ -1787,7 +1787,7 @@ function render_PassedOn() {
 }
 
 function render_Shelf() {
-  return render_WhatToWear() + render_Shelf_list() + render_WantToTry() + render_PassedOn();
+  return render_Shelf_list() + render_WhatToWear() + render_WantToTry() + render_PassedOn();
 }
 
 
@@ -2033,7 +2033,7 @@ function renderHeader() {
 
 function renderTabbar() {
   const tabs = [
-    { key: 'test', label: 'Test' }, { key: 'shelf', label: 'Shelf' },
+    { key: 'shelf', label: 'Shelf' }, { key: 'test', label: 'Test' },
     { key: 'insights', label: 'Insights' }, { key: 'data', label: 'Data' }
   ];
   document.getElementById('tabbar').innerHTML = tabs.map(t => {
