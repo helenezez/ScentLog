@@ -589,3 +589,46 @@ untouched, since both already serialize the collection generically.
 Screenshots confirm the Running Low callout, Samples section
 (including the overdue state), and the extended edit sheet all render
 correctly in both color schemes.
+
+## Fix: longevity missing from shelf card, observed-vs-library value
+
+Longevity was technically still on the card (buried in the meta line,
+abbreviated, mixed in with house/conc/family) but not in any sense the
+core, at-a-glance stat the PRD frames it as, which is what "no longer
+shows longevity" meant in practice. Three changes:
+
+1. **Longevity is now its own prominent line on the card face** — full
+   band text ("All day (10+ hrs)", not the abbreviated "All day"),
+   color-coded (sage/wine/gold/faint by band, reusing the same color
+   scheme the Tested log already used for its entry cards — extracted
+   that into a shared `longevityColor()` instead of leaving two copies
+   of the same ternary to drift). Removed from the house/conc/family
+   meta line, where it read as one fact among four instead of the
+   headline.
+
+2. **Cost per wear moved into the expanded detail view.** Still
+   computed the same way (`price / wears`), just no longer competing
+   with longevity for the same line on the collapsed card.
+
+3. **Observed longevity overrides the library value once a bottle has
+   logged tests.** `observedLongevity()` averages the `hours` field
+   across every Tested-log entry that references the bottle (hours
+   rather than each entry's own longevity band, since hours is the
+   more precise number and the band is just `bandFromHours()` applied
+   to it — averaging hours first and reducing once avoids compounding
+   rounding across multiple already-rounded bands) and reduces that
+   back to a band with the same `bandFromHours()` used everywhere
+   else. Falls back to the library's stated value when there are no
+   tests yet. The distinction is visible via a small pill next to the
+   value reading "observed" (filled sage) or "library" (neutral), and
+   the expanded detail spells out the actual numbers ("Longevity above
+   is observed from 3 logged tests, averaging 11.0h. The library
+   states All day (10+ hrs).") so the override is never a surprise.
+
+Verified with Playwright: a bottle with logged tests shows the
+"observed" tag and a band that reflects its actual average hours
+(tested with a case where the observed band differs from the
+library's, so the override is unambiguous); a bottle with no tests
+shows "library" and the library's stated value; cost-per-wear no
+longer renders on the collapsed card and does render in the expanded
+detail. Screenshots confirm both states in both color schemes.

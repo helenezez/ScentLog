@@ -204,6 +204,9 @@ button:active { transform: scale(0.98); }
 .shelf-name { font-size: 14px; font-weight: 600; color: var(--ink); letter-spacing: -0.01em; }
 .shelf-meta { font-size: 11px; color: var(--soft); }
 .shelf-cpw { font-size: 11px; font-variant-numeric: tabular-nums; }
+.shelf-longevity { font-size: 13px; font-weight: 700; display: flex; align-items: center; gap: 6px; }
+.long-source-tag { font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; padding: 2px 6px; border-radius: 20px; background: var(--field); color: var(--faint); }
+.long-source-tag.observed { background: var(--sage-fill); color: var(--sage); }
 .shelf-reach { flex: 0 0 auto; display: flex; flex-direction: column; align-items: flex-end; gap: 3px; }
 .shelf-reach-num { font-size: 15px; font-weight: 700; font-variant-numeric: tabular-nums; }
 .shelf-reach-label { font-size: 9.5px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--faint); }
@@ -383,6 +386,9 @@ function bandFromHours(h) {
   if (h < 6) return LONG_MOD;
   if (h < 10) return LONG_LONG;
   return LONG_ALL;
+}
+function longevityColor(l) {
+  return l === LONG_ALL ? 'var(--sage)' : l === LONG_LONG ? 'var(--wine)' : l === LONG_MOD ? 'var(--gold)' : 'var(--faint)';
 }
 
 // The 13 families and 4 longevity bands the library format guide defines.
@@ -1674,7 +1680,7 @@ function renderTestedLog() {
   }).slice().sort((a, b) => (b.date || '').localeCompare(a.date || ''));
 
   const filterDefs = [['all', 'Everything'], [LONG_ALL, 'All day'], [LONG_LONG, 'Long'], [LONG_MOD, 'Moderate'], [LONG_FAST, 'Faded fast']];
-  const bandColor = l => l === LONG_ALL ? 'var(--sage)' : l === LONG_LONG ? 'var(--wine)' : l === LONG_MOD ? 'var(--gold)' : 'var(--faint)';
+  const bandColor = longevityColor;
 
   return `
     ${sectionHeader({ glyph: GLYPH.log, title: 'Tested', sub: 'Every wear you have recorded, newest first', tint: 'var(--gold)', count: String(filtered.length) })}
@@ -1771,6 +1777,19 @@ function estimateDepletion(item) {
   const depletionDate = new Date(first + dayZero * 86400000);
   const daysFromNow = Math.round((depletionDate.getTime() - Date.now()) / 86400000);
   return { date: depletionDate.toISOString().slice(0, 10), daysFromNow };
+}
+
+// What a bottle actually does on skin beats what the library claims. Averages
+// the hours from every logged test that references this bottle (not just the
+// band label, which the user can hand-edit independently of hours — hours is
+// the more precise underlying number) and reduces that back to a band via the
+// same bandFromHours() used everywhere else. Returns null when there are no
+// tests yet, so the caller can fall back to the library's stated value.
+function observedLongevity(item) {
+  const hits = state.entries.filter(e => e.ref === item.id && e.hours != null);
+  if (!hits.length) return null;
+  const avgHours = hits.reduce((s, e) => s + e.hours, 0) / hits.length;
+  return { band: bandFromHours(avgHours), hours: avgHours, n: hits.length };
 }
 
 function computeWearPicks() {
@@ -1874,6 +1893,8 @@ function render_Shelf_list() {
   const rows = sorted.map((c, i) => {
     const w = wears[c.id] || 0;
     const cpw = c.price && w > 0 ? (c.price / w) : null;
+    const observed = observedLongevity(c);
+    const longBand = observed ? observed.band : c.longevity;
     const est = estimateDepletion(c);
     const runningLow = est && est.daysFromNow <= 60;
     const isTop = i === 0;
@@ -1898,8 +1919,11 @@ function render_Shelf_list() {
           <div class="rank-circle" style="background:${isTop ? 'var(--gold)' : 'transparent'};color:${isTop ? 'var(--on-acc)' : 'var(--wine)'};border-color:${isTop ? 'var(--gold)' : 'var(--wine)'}">${i + 1}</div>
           <div class="shelf-body" data-toggle-shelf="${c.id}">
             <div class="shelf-name">${esc(c.name)}</div>
-            <div class="shelf-meta">${esc([c.house, c.conc, c.family, LONG_SHORT[c.longevity] || c.longevity].filter(Boolean).join(' · '))}</div>
-            <div class="shelf-cpw" style="color:${cpw ? 'var(--sage)' : 'var(--faint)'}">${cpw ? '$' + cpw.toFixed(0) + ' per wear · ' + w + ' logged' : (c.price ? 'No wears logged yet' : 'Add a price to see cost per wear')}</div>
+            <div class="shelf-meta">${esc([c.house, c.conc, c.family].filter(Boolean).join(' · '))}</div>
+            <div class="shelf-longevity" style="color:${longevityColor(longBand)}">
+              ${longBand ? esc(longBand) : 'No longevity data yet'}
+              ${longBand ? `<span class="long-source-tag${observed ? ' observed' : ''}">${observed ? 'observed' : 'library'}</span>` : ''}
+            </div>
           </div>
           <div class="shelf-reach">
             <div class="shelf-reach-num" style="color:${isTop ? 'var(--gold)' : 'var(--wine)'}">${c.reach}</div>
@@ -1915,6 +1939,8 @@ function render_Shelf_list() {
         ` : `<div style="height:10px"></div>`}
         ${expanded && state.editingBottle === c.id ? renderBottleEditForm(c) : expanded ? `
           <div class="shelf-detail">
+            <div class="shelf-cpw" style="color:${cpw ? 'var(--sage)' : 'var(--faint)'}">${cpw ? '$' + cpw.toFixed(0) + ' per wear · ' + w + ' logged' : (c.price ? 'No wears logged yet' : 'Add a price to see cost per wear')}</div>
+            ${observed ? `<div style="font-size:11px;color:var(--soft);line-height:1.4">Longevity above is observed from ${observed.n} logged ${observed.n === 1 ? 'test' : 'tests'}, averaging ${observed.hours.toFixed(1)}h. The library states ${esc(c.longevity || 'no value')}.</div>` : ''}
             ${tiers.length ? `<div style="display:flex;flex-direction:column;gap:8px">
               ${tiers.map(t => `<div class="tier-row"><div class="tier-label" style="color:${t.color}">${t.label}</div><div class="tier-notes">${esc(t.notes)}</div></div>`).join('')}
             </div>` : ''}
