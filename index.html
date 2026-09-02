@@ -1385,6 +1385,97 @@ function knownNames() {
   return state.collection.concat(state.wishlist.map(w => Object.assign({}, w, { verified: false })));
 }
 
+// ---- Phase 2.3: checkpoint notifications ----
+// iOS Safari (outside an installed home-screen PWA) has no Notification API
+// at all, and even installed, scheduled delivery while the app is fully
+// closed is unreliable (PRD 2.2/2.3). So this only ever promises delivery
+// for the current session via setTimeout while the tab/app stays open; the
+// always-on fallback is the overdue detection in checkpointRows(), which is
+// pure timestamp math against activeTest.startedAt and needs no permission,
+// no timer, and survives a closed app or full reload.
+const NOTIF_DENIED_SHOWN_KEY = 'scent-notif-denied-shown';
+let checkpointTimers = [];
+
+function notificationStatus() {
+  if (typeof Notification === 'undefined') return 'unsupported';
+  return Notification.permission; // 'default' | 'granted' | 'denied'
+}
+
+function notifyNoteText() {
+  const status = notificationStatus();
+  if (status === 'granted') return 'Notifications are on. You will get a ping at each checkpoint while this stays open.';
+  if (status === 'denied') return 'Notifications are blocked. Missed checkpoints show up here when you open the app.';
+  if (status === 'unsupported') return 'Notifications are not available in this browser. Missed checkpoints show up here when you open the app.';
+  return 'Missed checkpoints show up here when you open the app.';
+}
+
+// Requested only from the start-test action itself, never on load. Resolves
+// immediately (no browser prompt) once the user has answered once, since
+// Notification.permission only reads 'default' before a first answer.
+async function ensureNotificationPermission() {
+  if (typeof Notification === 'undefined') return 'unsupported';
+  if (Notification.permission === 'default') {
+    try { await Notification.requestPermission(); } catch (e) {}
+  }
+  return Notification.permission;
+}
+
+function notifyDeniedOnce(status) {
+  if (status !== 'denied' && status !== 'unsupported') return;
+  if (localStorage.getItem(NOTIF_DENIED_SHOWN_KEY)) return;
+  localStorage.setItem(NOTIF_DENIED_SHOWN_KEY, '1');
+  showToast(
+    status === 'unsupported'
+      ? "This browser can't do checkpoint notifications. You'll see missed ones marked overdue when you reopen the app."
+      : 'Notifications are blocked. You will still see missed checkpoints marked overdue when you reopen the app.',
+    null
+  );
+}
+
+function clearCheckpointTimers() {
+  checkpointTimers.forEach(id => clearTimeout(id));
+  checkpointTimers = [];
+}
+
+// Arms setTimeout callbacks for whichever checkpoints are still ahead of
+// now. Called on test start and again on app open if a test is already
+// active, since a fresh page load has no memory of previously-armed timers.
+// Live-refreshes the in-app overdue state on fire even without permission,
+// so the header badge and card update the moment a checkpoint comes due
+// without waiting for the user to touch anything.
+function scheduleCheckpointTimers() {
+  clearCheckpointTimers();
+  const at = state.activeTest;
+  if (!at) return;
+  const now = Date.now();
+  CP_DEFS.forEach(def => {
+    if (def.mins === 0) return;
+    const due = at.startedAt + def.mins * 60000;
+    const delay = due - now;
+    if (delay <= 0) return;
+    const startedAtSnapshot = at.startedAt;
+    const id = setTimeout(() => fireCheckpointDue(startedAtSnapshot, def), delay);
+    checkpointTimers.push(id);
+  });
+}
+
+function fireCheckpointDue(startedAtSnapshot, def) {
+  const at = state.activeTest;
+  if (!at || at.startedAt !== startedAtSnapshot) return;
+  if ((at.cps || {})[def.mins]) return;
+  if (notificationStatus() === 'granted') {
+    try {
+      const n = new Notification('Scent Log', {
+        body: def.label + ' checkpoint due for ' + at.name,
+        tag: 'scentlog-cp-' + def.mins
+      });
+      n.onclick = () => { try { window.focus(); } catch (e) {} };
+    } catch (e) {}
+  }
+  renderHeader();
+  if (state.tab === 'test') renderActiveTab();
+}
+
 function checkpointRows() {
   const at = state.activeTest;
   if (!at) return [];
@@ -1470,7 +1561,7 @@ function renderLiveTestCard() {
         </div>
       `).join('')}
       <div style="padding:11px 14px;display:flex;align-items:center;gap:10px">
-        <div style="font-size:11px;color:var(--faint);flex:1 1 auto">Notifications are off. Missed checkpoints show up here when you open the app.</div>
+        <div style="font-size:11px;color:var(--faint);flex:1 1 auto">${esc(notifyNoteText())}</div>
         <button id="finishTestBtn" style="padding:8px 12px;font-size:11.5px;font-weight:600">Finish</button>
       </div>
     </div>
@@ -2123,6 +2214,7 @@ function finishActiveTest() {
   };
   state.entries.push(entry);
   state.activeTest = null;
+  clearCheckpointTimers();
   persist();
   showToast('Test closed and filed', before);
   renderActiveTab(); renderHeader();
@@ -2137,6 +2229,10 @@ function init() {
   renderTabbar();
   renderActiveTab();
   wireEvents();
+  // Re-arm this session's in-session timers for a test already in progress
+  // from before this load (e.g. a reload). Does not request permission —
+  // that only ever happens from the start-test action itself.
+  if (state.activeTest) scheduleCheckpointTimers();
 }
 
 function wireEvents() {
@@ -2181,7 +2277,13 @@ function wireEvents() {
         cps: { 0: '', 30: '', 120: '', 360: '' }
       };
       state.testName = ''; state.testTemp = ''; state.testRh = '';
-      persist(); renderActiveTab(); renderHeader(); return;
+      persist(); renderActiveTab(); renderHeader();
+      ensureNotificationPermission().then(status => {
+        notifyDeniedOnce(status);
+        scheduleCheckpointTimers();
+        if (state.activeTest && state.tab === 'test') renderActiveTab();
+      });
+      return;
     }
 
     const suggItem = t.closest('.sugg-item');

@@ -251,3 +251,72 @@ explicitly shipped every "Edit" affordance as a toast stub).
   typed into price/size/fill/notes above it — verified in both color
   schemes with a Playwright pass that types into a field, toggles two
   chips, and confirms the typed value survived before saving.
+
+## Phase 2 — checkpoint notifications (§2, fixes D5)
+
+Active test state (§2.1) and the live test card (§2.2) were already in
+place from the v2 shell pass. This phase is specifically §2.3:
+notifications, plus the fallback the PRD calls out as load-bearing.
+
+**How the iOS constraint was actually handled.** PRD §2.2 flags two
+separate problems, and they need two separate answers, not one:
+
+1. *No Notification API at all* outside an installed home-screen PWA
+   on iOS Safari — `typeof Notification === 'undefined'` in a plain
+   tab. Detected once via `notificationStatus()` and treated as its
+   own state (`'unsupported'`), not lumped in with "denied."
+2. *Unreliable delivery while the app is closed*, even once installed
+   — a `setTimeout` armed at minute 0 has no way to fire at minute 30
+   if the tab or app process isn't alive to run it.
+
+For (1), the app never assumes the API exists — every call site checks
+`notificationStatus()` first. For (2), the fix isn't a better
+scheduling trick (there isn't one available to a plain web app); it's
+routing around the assumption that a *push notification* is what
+tells the user a checkpoint is due. What actually tells them is
+**timestamp math against `activeTest.startedAt`**, computed fresh
+every time `checkpointRows()` runs (on any render, `state.activeTest`
+in hand) — a checkpoint is `overdue` the moment `now > dueAt`, full
+stop, no timer or permission involved. That computation already
+existed before this phase (it's what puts the "N due" badge in the
+header and marks a checkpoint "Missed. Record it now, approximate is
+fine." in the live test card) and needed no changes — it's what
+`fireCheckpointDue()` piggybacks on rather than replacing.
+
+**What's new is the in-session layer on top:**
+- `Notification` permission is requested from `ensureNotificationPermission()`,
+  called only from the start-test action — never on load, never on
+  reopen, matching §2.3 exactly. `Notification.permission` only reads
+  `'default'` before a first answer, so this is a no-op prompt (no
+  browser dialog) on every start after the first.
+- On start, and again on app load if a test is already active (a
+  fresh page load has no memory of the previous session's timers),
+  `scheduleCheckpointTimers()` arms one `setTimeout` per checkpoint
+  that's still genuinely in the future — never for one already
+  overdue, since that's the fallback's job, not a timer's. Recording a
+  checkpoint early, or finishing the test, invalidates or clears the
+  relevant timers so a stale one can't fire after the fact.
+- When a timer fires: if permission is `'granted'`, show a real
+  `Notification`; independent of that, always re-render the header
+  badge and (if the Test tab is open) the live card, so the UI catches
+  up the instant a checkpoint comes due even if the OS notification is
+  unavailable or the user has the tab focused and wouldn't see an OS
+  banner anyway.
+- **Not silent on denied/unsupported**: a one-time toast ("Notifications
+  are blocked / not available here — you'll still see missed
+  checkpoints marked overdue when you reopen the app") fires the first
+  time either state is hit, gated by a localStorage flag so it doesn't
+  nag on every subsequent test. The live test card's own status line
+  is never static copy — it reads real `Notification.permission` on
+  every render, so "Notifications are on" / "blocked" / "not available
+  in this browser" always matches what's actually true.
+
+Verified in Chromium with the permission API mocked both ways: granted
+(3 timers arm on a fresh test; a due, unrecorded checkpoint fires a
+real `Notification`; an early-recorded one does not; Finish clears all
+timers) and denied (one-time toast, correct card copy, no repeat toast
+on a second test). Separately verified the fallback needs none of this
+machinery: a test seeded 3 hours in the past with two checkpoints past
+due shows the header badge and both "Missed" rows correctly on a
+fresh page load, with zero timers armed for the two already-overdue
+ones and exactly one for the checkpoint still genuinely ahead.
