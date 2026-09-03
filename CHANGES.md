@@ -708,3 +708,71 @@ shows the fallback message without breaking manual entry; and a
 bottle with 2 cool + 2 hot logged tests produces the expected
 per-fragrance variance sentence. Screenshots confirm the fetch,
 active-test, error, and per-fragrance states in both color schemes.
+
+## Phase 5.2, 5.3, 6.1, 6.2 — remaining PRD phases
+
+Closes out everything left in the PRD's phased roadmap: the rest of
+context capture (5.2, 5.3) and the rest of usability debt (6.1, 6.2).
+
+**5.2 — season/occasion tags on entries.** Collection items already
+had these; Tested-log entries didn't, so a wear couldn't be tagged
+independently of the bottle it came from (you might wear the same
+fragrance differently in different seasons). Added `seasons`/
+`occasions` arrays to entries, editable via the same chip-row pattern
+already used on the bottle edit sheet, shown as tags on the collapsed
+entry card, and wired into the new season filter in 6.2 below.
+
+**5.3 — layering log.** A genuinely new record type, not a variant of
+a Tested-log entry: two or more fragrance references, a rating (reuses
+the same 1-10 segment picker as reach, for visual consistency), and
+notes. Kept separate from `state.entries` because forcing a
+combination into the single-fragrance entry shape would corrupt every
+per-fragrance calculation that assumes `ref` points at exactly one
+bottle (observed longevity, weather variance, cost per wear). Lives at
+the bottom of the Test tab, its natural home next to the Tested log.
+References resolve to collection items by name at save time, same
+pattern as everywhere else names get linked; a combo logged before a
+bottle was added still displays and still matches once the bottle
+shows up, since surfacing also falls back to a case-insensitive name
+match. Editing is scoped to rating and notes — re-picking the
+fragrances isn't supported, since fixing a rating or a typo covers the
+realistic edit case without a multi-name-editing UI (see the "one deep
+insight beats twelve shallow ones" tradeoff below). "Surface successful
+combinations on the relevant collection cards" (rating 7+, the same
+positive threshold `weightForReach()` uses elsewhere) renders as a
+"Layers well with X (rated Y/10)" line in the shelf card's expanded
+detail, alongside cost-per-wear and the observed-longevity
+explanation.
+
+**6.1 — wishlist edit path.** The last of the three record types PRD
+6.1 names (`entry, collection item, and wishlist item`) without an
+edit path. Tapping a wishlist item's name/note now opens an inline
+edit form (name + note, Save/Cancel) in place of the row, matching how
+every other edit-in-place flow in the app already works.
+
+**6.2 — Tested log search/filter upgrade.** Text search already
+covered "filter by fragrance"; the longevity-band chips already
+existed. Added the rest behind a "More filters" disclosure (collapsed
+by default, so the already-dense Tested log header doesn't get
+permanently busier, with a `•` marker when a hidden filter is active
+and a "Clear these filters" link once one is): a family filter
+(`entryFamily()` resolves a family the same way `houseFor()` resolves
+a house — prefer the linked collection item, fall back to a library
+lookup by name), the new per-entry season tags from 5.2, a date range,
+and a sort control (date newest-first, the existing default, or
+longevity longest-first).
+
+Verified with Playwright across all four: entry season/occasion tags
+save, display, and correctly narrow the Tested log when filtered;
+family/season/date-range filters each narrow to the expected subset
+and "Clear these filters" resets them; sorting by longevity reorders
+correctly; a layering combo saves with resolved refs, displays in the
+log, surfaces on the linked shelf card's detail, stops surfacing the
+moment its rating is edited below 7, and removes with a working undo;
+the add-slot control caps at 5 and the remove-slot control floors at
+2; wishlist editing saves a new name and note. Screenshots confirm the
+filters panel, tagged entry, entry edit chips, layering log (list and
+add form), the shelf-card surfacing line, and the wishlist edit form,
+all in both color schemes.
+
+This closes every phase in the PRD's roadmap (Phases 1 through 6).

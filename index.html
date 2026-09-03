@@ -336,6 +336,7 @@ const KEYS = {
   entries: 'scent-entries',
   wishlist: 'scent-wishlist',
   passed: 'scent-passed',
+  layers: 'scent-layers',
   activeTest: 'scent-active-test',
   meta: 'scent-meta'
 };
@@ -413,7 +414,8 @@ const GLYPH = {
   profile: 'M4 19V9M10 19V4M16 19v-7M22 19H2',
   weather: 'M3 17l5-6 4 3 5-7 4 5',
   recommend: 'M12 3l2.5 6H21l-5 4 2 7-6-4-6 4 2-7-5-4h6.5z',
-  data: 'M3 7l9-4 9 4-9 4-9-4zM3 7v10l9 4 9-4V7'
+  data: 'M3 7l9-4 9 4-9 4-9-4zM3 7v10l9 4 9-4V7',
+  layers: 'M12 3L2 9l10 6 10-6-10-6z M2 15l10 6 10-6'
 };
 const TAB_GLYPH = {
   test: GLYPH.test, shelf: GLYPH.shelf,
@@ -1224,17 +1226,22 @@ function searchLibrary(query) {
 
 // ---- state ----
 let state = {
-  collection: [], entries: [], wishlist: [], passed: [], activeTest: null,
+  collection: [], entries: [], wishlist: [], passed: [], layers: [], activeTest: null,
   tab: 'shelf', expanded: {}, search: '', longFilter: 'all',
   season: 'summer', occasion: 'date',
   editingCp: null, cpDraft: '',
   editingBottle: null, bottleDraft: null,
-  editingEntry: null,
+  editingEntry: null, entryDraft: null,
+  editingWish: null,
   acOpenFor: null,
   testName: '', testTemp: '', testRh: '',
   testWeatherSource: null, weatherFetch: { status: 'idle', message: '' },
   wishDraft: '', shelfDraft: '', passDraft: '', passReason: PASS_REASONS[0],
   sampleDraft: '', sampleDecideByDraft: '',
+  layerNames: ['', ''], layerRating: 5, layerNotes: '', layerAcOpenFor: null,
+  editingLayer: null, layerEditDraft: null,
+  testFamilyFilter: 'all', testSeasonFilter: 'all', testDateFrom: '', testDateTo: '',
+  testSort: 'date', testFiltersOpen: false,
   toast: null, undoSnapshot: null, importErr: '', libraryImportMsg: null
 };
 
@@ -1349,6 +1356,7 @@ function loadState() {
   state.entries = readJSON(KEYS.entries, []);
   state.wishlist = readJSON(KEYS.wishlist, []);
   state.passed = readJSON(KEYS.passed, []);
+  state.layers = readJSON(KEYS.layers, []);
   state.activeTest = readJSON(KEYS.activeTest, null);
 }
 
@@ -1357,6 +1365,7 @@ function persist() {
   localStorage.setItem(KEYS.entries, JSON.stringify(state.entries));
   localStorage.setItem(KEYS.wishlist, JSON.stringify(state.wishlist));
   localStorage.setItem(KEYS.passed, JSON.stringify(state.passed));
+  localStorage.setItem(KEYS.layers, JSON.stringify(state.layers));
   localStorage.setItem(KEYS.activeTest, JSON.stringify(state.activeTest));
 }
 
@@ -1366,12 +1375,14 @@ function snapshot() {
     entries: JSON.parse(JSON.stringify(state.entries)),
     wishlist: JSON.parse(JSON.stringify(state.wishlist)),
     passed: JSON.parse(JSON.stringify(state.passed)),
+    layers: JSON.parse(JSON.stringify(state.layers)),
     activeTest: JSON.parse(JSON.stringify(state.activeTest))
   };
 }
 function restoreSnapshot(snap) {
   state.collection = snap.collection; state.entries = snap.entries;
-  state.wishlist = snap.wishlist; state.passed = snap.passed; state.activeTest = snap.activeTest;
+  state.wishlist = snap.wishlist; state.passed = snap.passed; state.layers = snap.layers || [];
+  state.activeTest = snap.activeTest;
   persist();
 }
 
@@ -1725,24 +1736,76 @@ function renderLiveTestCard() {
   `;
 }
 
+// Resolves a Tested-log entry's fragrance family the same way houseFor()
+// resolves house: prefer the linked shelf item's own family, else fall back
+// to a fresh library lookup by name. Used for the family filter (PRD 6.2).
+function entryFamily(e) {
+  if (e.ref) { const c = state.collection.find(x => x.id === e.ref); if (c && c.family) return c.family; }
+  const lib = lookupLibrary(e.name);
+  return lib ? lib.family : '';
+}
+
 function renderTestedLog() {
   const q = state.search.trim().toLowerCase();
+  const allFamilies = Array.from(new Set(state.entries.map(entryFamily).filter(Boolean))).sort();
   const filtered = state.entries.filter(e => {
     if (state.longFilter !== 'all' && e.longevity !== state.longFilter) return false;
+    if (state.testFamilyFilter !== 'all' && entryFamily(e) !== state.testFamilyFilter) return false;
+    if (state.testSeasonFilter !== 'all' && !(e.seasons || []).includes(state.testSeasonFilter)) return false;
+    if (state.testDateFrom && (e.date || '') < state.testDateFrom) return false;
+    if (state.testDateTo && (e.date || '') > state.testDateTo) return false;
     if (!q) return true;
     return (e.name + ' ' + (e.dry || '') + ' ' + (e.site || '')).toLowerCase().includes(q);
-  }).slice().sort((a, b) => (b.date || '').localeCompare(a.date || ''));
+  }).slice().sort((a, b) => state.testSort === 'longevity'
+    ? (b.hours != null ? b.hours : -1) - (a.hours != null ? a.hours : -1)
+    : (b.date || '').localeCompare(a.date || ''));
 
   const filterDefs = [['all', 'Everything'], [LONG_ALL, 'All day'], [LONG_LONG, 'Long'], [LONG_MOD, 'Moderate'], [LONG_FAST, 'Faded fast']];
   const bandColor = longevityColor;
+  const extraFiltersActive = state.testFamilyFilter !== 'all' || state.testSeasonFilter !== 'all'
+    || !!state.testDateFrom || !!state.testDateTo || state.testSort !== 'date';
 
   return `
-    ${sectionHeader({ glyph: GLYPH.log, title: 'Tested', sub: 'Every wear you have recorded, newest first', tint: 'var(--gold)', count: String(filtered.length) })}
+    ${sectionHeader({ glyph: GLYPH.log, title: 'Tested', sub: state.testSort === 'longevity' ? 'Longest-lasting first' : 'Every wear you have recorded, newest first', tint: 'var(--gold)', count: String(filtered.length) })}
     <div style="display:flex;flex-direction:column;gap:9px">
       <input id="searchInput" value="${esc(state.search)}" placeholder="Search by name, dry-down, or site">
       <div class="chip-row" style="flex-wrap:nowrap;overflow-x:auto;padding-bottom:2px">
         ${filterDefs.map(([k, l]) => chip(l, state.longFilter === k, 'var(--gold)', `data-filter="${k}"`)).join('')}
       </div>
+      <div class="row-flex" style="align-items:center">
+        <div class="link-action" id="testFiltersToggle" style="flex:1 1 auto">${state.testFiltersOpen ? 'Hide filters' : 'More filters'}${extraFiltersActive ? ' •' : ''}</div>
+      </div>
+      ${state.testFiltersOpen ? `
+        <div class="card card-pad" style="display:flex;flex-direction:column;gap:10px">
+          <div class="row-flex">
+            <div class="f1">
+              ${bottleFieldLabel('Family')}
+              <select id="testFamilySelect">
+                <option value="all" ${state.testFamilyFilter === 'all' ? 'selected' : ''}>All families</option>
+                ${allFamilies.map(f => `<option value="${esc(f)}" ${state.testFamilyFilter === f ? 'selected' : ''}>${esc(f)}</option>`).join('')}
+              </select>
+            </div>
+            <div class="f1">
+              ${bottleFieldLabel('Sort by')}
+              <select id="testSortSelect">
+                <option value="date" ${state.testSort === 'date' ? 'selected' : ''}>Date, newest first</option>
+                <option value="longevity" ${state.testSort === 'longevity' ? 'selected' : ''}>Longevity, longest first</option>
+              </select>
+            </div>
+          </div>
+          ${bottleFieldLabel('Season')}
+          <div class="chip-row">
+            ${chip('all', state.testSeasonFilter === 'all', 'var(--sage)', 'data-test-season="all"')}
+            ${SEASONS.map(k => chip(k, state.testSeasonFilter === k, 'var(--sage)', `data-test-season="${k}"`)).join('')}
+          </div>
+          ${bottleFieldLabel('Date range')}
+          <div class="row-flex">
+            <div class="f1"><input id="testDateFromInput" type="date" value="${esc(state.testDateFrom)}"></div>
+            <div class="f1"><input id="testDateToInput" type="date" value="${esc(state.testDateTo)}"></div>
+          </div>
+          ${extraFiltersActive ? `<div class="link-faint" id="testFiltersClear">Clear these filters</div>` : ''}
+        </div>
+      ` : ''}
       ${filtered.map(e => state.editingEntry === e.id ? `
         <div class="card" style="border-left:3px solid ${bandColor(e.longevity)};padding:11px 13px;display:flex;flex-direction:column;gap:8px">
           <div class="entry-name">${esc(nameWithHouse(e.name, houseFor(e.name, e.ref)))}</div>
@@ -1762,6 +1825,10 @@ function renderTestedLog() {
             <div class="f1"><input id="editTempC" value="${e.tempC != null ? e.tempC : ''}" placeholder="Temp C (optional)" inputmode="numeric"></div>
             <div class="f1"><input id="editRh" value="${e.rh != null ? e.rh : ''}" placeholder="Humidity % (optional)" inputmode="numeric"></div>
           </div>
+          ${bottleFieldLabel('Seasons')}
+          <div class="chip-row">${SEASONS.map(k => chip(k, (state.entryDraft ? state.entryDraft.seasons : []).includes(k), 'var(--sage)', `data-edit-entry-season="${k}"`)).join('')}</div>
+          ${bottleFieldLabel('Occasions')}
+          <div class="chip-row">${OCCASIONS.map(k => chip(k, (state.entryDraft ? state.entryDraft.occasions : []).includes(k), 'var(--wine)', `data-edit-entry-occasion="${k}"`)).join('')}</div>
           <textarea id="editDry" rows="3" placeholder="Dry-down notes">${esc(e.dry || '')}</textarea>
           <div class="row-flex">
             <button class="btn-primary" style="flex:1 1 auto" data-save-entry="${e.id}">Save</button>
@@ -1783,6 +1850,7 @@ function renderTestedLog() {
             <div>${esc(e.site || '—')}</div>
           </div>
           ${e.dry ? `<div class="entry-dry">${esc(e.dry)}</div>` : ''}
+          ${(e.seasons && e.seasons.length) || (e.occasions && e.occasions.length) ? `<div class="tag-row">${(e.seasons || []).concat(e.occasions || []).map(t => `<div class="tag">${esc(t)}</div>`).join('')}</div>` : ''}
           <div class="entry-actions">
             <div class="link-action" data-edit-entry="${e.id}">Edit</div>
             <div class="link-faint" data-remove-entry="${e.id}" data-label="${esc(e.name)}">Remove</div>
@@ -1790,6 +1858,74 @@ function renderTestedLog() {
         </div>
       `).join('')}
       ${filtered.length === 0 ? `<div class="empty">${state.entries.length === 0 ? 'No tests yet. Start one above and it lands here with its weather attached.' : 'No tests match that. Clear the search or filter to see everything.'}</div>` : ''}
+    </div>
+  `;
+}
+
+function ratingSegRow(value, attr) {
+  let segs = '';
+  for (let v = 1; v <= 10; v++) {
+    const on = v <= value;
+    segs += `<div class="seg" ${attr}="${v}" style="background:${on ? 'var(--sage)' : 'var(--field)'};color:${on ? 'var(--on-acc)' : 'var(--faint)'}">${v === value ? v : ''}</div>`;
+  }
+  return `<div class="seg-row">${segs}</div>`;
+}
+
+// PRD 5.3: a layering entry is its own record type (2+ fragrance references,
+// a rating, and notes), not a variant of a Tested-log entry — a combination
+// isn't a single fragrance's performance, and forcing it into that shape
+// would break every note-weighting and per-fragrance calculation the rest
+// of the app relies on `ref` for. Refs are resolved by name against the
+// collection at save time, same as everywhere else names get linked.
+function render_LayeringLog() {
+  const sorted = state.layers.slice().sort((a, b) => (b.date || '').localeCompare(a.date || ''));
+  const slotCount = state.layerNames.length;
+  return `
+    <div>
+      ${sectionHeader({ glyph: GLYPH.layers, title: 'Layering log', sub: 'Combinations you have worn together, and how they worked', tint: 'var(--sage)', count: String(state.layers.length) })}
+      <div class="card card-pad" style="display:flex;flex-direction:column;gap:10px">
+        ${state.layerNames.map((name, idx) => `
+          <div class="row-flex" style="align-items:center">
+            <div class="ac-wrap f1">
+              <input id="layerName${idx}" value="${esc(name)}" placeholder="Fragrance ${idx + 1}" autocomplete="off">
+              ${renderAcDropdown('layerName' + idx, name)}
+            </div>
+            ${slotCount > 2 ? `<button class="x-btn" data-remove-layer-slot="${idx}" aria-label="Remove">&times;</button>` : ''}
+          </div>
+        `).join('')}
+        ${slotCount < 5 ? `<div class="link-action" id="addLayerSlot">+ Add another fragrance</div>` : ''}
+        ${bottleFieldLabel('How did it work')}
+        ${ratingSegRow(state.layerRating, 'data-set-layer-rating')}
+        <textarea id="layerNotesInput" rows="2" placeholder="Notes, e.g. what worked about it">${esc(state.layerNotes)}</textarea>
+        <button class="btn-primary" id="saveLayerBtn">Log this combination</button>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:8px;margin-top:9px">
+        ${sorted.map(l => state.editingLayer === l.id ? `
+          <div class="card card-pad" style="display:flex;flex-direction:column;gap:8px">
+            <div class="entry-name">${esc(l.names.join(' + '))}</div>
+            ${ratingSegRow(state.layerEditDraft ? state.layerEditDraft.rating : l.rating, 'data-set-layer-edit-rating')}
+            <textarea id="layerEditNotes" rows="2" placeholder="Notes">${esc(state.layerEditDraft ? state.layerEditDraft.notes : (l.notes || ''))}</textarea>
+            <div class="row-flex">
+              <button class="btn-primary" style="flex:1 1 auto" data-save-layer-edit="${l.id}">Save</button>
+              <button data-cancel-layer-edit="1" style="padding:9px 14px">Cancel</button>
+            </div>
+          </div>
+        ` : `
+          <div class="card card-pad" style="display:flex;flex-direction:column;gap:6px">
+            <div style="display:flex;align-items:baseline;gap:8px">
+              <div style="font-size:13px;font-weight:600;color:var(--ink);flex:1 1 auto">${esc(l.names.join(' + '))}</div>
+              <div style="font-size:13px;font-weight:700;color:var(--sage)">${l.rating}/10</div>
+            </div>
+            <div style="font-size:10.5px;color:var(--faint)">${esc(fmtShortDate(l.date))}</div>
+            ${l.notes ? `<div style="font-size:12px;color:var(--soft);line-height:1.5">${esc(l.notes)}</div>` : ''}
+            <div class="row-flex" style="gap:12px;margin-top:2px">
+              <div class="link-action" data-edit-layer="${l.id}">Edit</div>
+              <div class="link-faint" data-remove-layer="${l.id}" data-label="${esc(l.names.join(' + '))}">Remove</div>
+            </div>
+          </div>
+        `).join('')}
+        ${!state.layers.length ? `<div class="empty">Wore two fragrances together? Log it above and successful combinations will show up on the relevant shelf cards.</div>` : ''}
+      </div>
     </div>
   `;
 }
@@ -1802,6 +1938,7 @@ function render_Test() {
       ${renderLiveTestCard()}
     </div>
     <div>${renderTestedLog()}</div>
+    <div>${render_LayeringLog()}</div>
   `;
 }
 
@@ -1844,6 +1981,23 @@ function observedLongevity(item) {
   if (!hits.length) return null;
   const avgHours = hits.reduce((s, e) => s + e.hours, 0) / hits.length;
   return { band: bandFromHours(avgHours), hours: avgHours, n: hits.length };
+}
+
+// PRD 5.3: "surface successful combinations on the relevant collection
+// cards." Matches a layering log entry to a bottle by ref first (set at save
+// time via a collection lookup by name), falling back to a case-insensitive
+// name match for combos logged before the bottle existed on the shelf or
+// resolved to nothing. Only surfaces combos rated 7+ ("successful"), the
+// same positive threshold weightForReach() already uses elsewhere.
+function layeringNotesFor(item) {
+  const nameLower = item.name.toLowerCase();
+  const hits = state.layers.filter(l => l.rating >= 7 && (
+    (l.refs || []).includes(item.id) || (l.names || []).some(n => n.toLowerCase() === nameLower)
+  ));
+  return hits.map(l => {
+    const partners = l.names.filter(n => n.toLowerCase() !== nameLower);
+    return { partners, rating: l.rating, notes: l.notes || '' };
+  }).sort((a, b) => b.rating - a.rating);
 }
 
 function computeWearPicks() {
@@ -1951,6 +2105,7 @@ function render_Shelf_list() {
     const longBand = observed ? observed.band : c.longevity;
     const est = estimateDepletion(c);
     const runningLow = est && est.daysFromNow <= 60;
+    const layerNotes = layeringNotesFor(c);
     const isTop = i === 0;
     const expanded = !!state.expanded[c.id];
     const tiers = c.notes ? [
@@ -1995,6 +2150,7 @@ function render_Shelf_list() {
           <div class="shelf-detail">
             <div class="shelf-cpw" style="color:${cpw ? 'var(--sage)' : 'var(--faint)'}">${cpw ? '$' + cpw.toFixed(0) + ' per wear · ' + w + ' logged' : (c.price ? 'No wears logged yet' : 'Add a price to see cost per wear')}</div>
             ${observed ? `<div style="font-size:11px;color:var(--soft);line-height:1.4">Longevity above is observed from ${observed.n} logged ${observed.n === 1 ? 'test' : 'tests'}, averaging ${observed.hours.toFixed(1)}h. The library states ${esc(c.longevity || 'no value')}.</div>` : ''}
+            ${layerNotes.length ? `<div style="display:flex;flex-direction:column;gap:4px">${layerNotes.map(n => `<div style="font-size:11.5px;color:var(--sage);line-height:1.4">Layers well with ${esc(n.partners.join(' + ') || 'itself')} (rated ${n.rating}/10)${n.notes ? ': ' + esc(n.notes) : ''}</div>`).join('')}</div>` : ''}
             ${tiers.length ? `<div style="display:flex;flex-direction:column;gap:8px">
               ${tiers.map(t => `<div class="tier-row"><div class="tier-label" style="color:${t.color}">${t.label}</div><div class="tier-notes">${esc(t.notes)}</div></div>`).join('')}
             </div>` : ''}
@@ -2113,9 +2269,18 @@ function render_WantToTry() {
     <div>
       ${sectionHeader({ glyph: GLYPH.wish, title: 'Want to try', sub: 'Sample these before you buy a full bottle', tint: 'var(--gold)', count: String(state.wishlist.length) })}
       <div style="display:flex;flex-direction:column;gap:8px">
-        ${state.wishlist.map(w => `
+        ${state.wishlist.map(w => state.editingWish === w.id ? `
+          <div class="card card-pad" style="display:flex;flex-direction:column;gap:8px">
+            <input id="editWishName" value="${esc(w.name)}" placeholder="Fragrance name">
+            <input id="editWishNote" value="${esc(w.note || '')}" placeholder="Note, e.g. why you want to try it">
+            <div class="row-flex">
+              <button class="btn-primary" style="flex:1 1 auto" data-save-wish="${w.id}">Save</button>
+              <button data-cancel-wish="1" style="padding:9px 14px">Cancel</button>
+            </div>
+          </div>
+        ` : `
           <div class="wish-item">
-            <div class="f1">
+            <div class="f1" data-edit-wish="${w.id}" style="cursor:pointer">
               <div class="wish-name">${esc(w.name)}</div>
               <div class="wish-sub">${esc(w.note || houseFor(w.name, null) || 'No note yet')}</div>
             </div>
@@ -2353,7 +2518,7 @@ function doExport() {
     exportedAt: new Date().toISOString(),
     data: {
       collection: state.collection, entries: state.entries, wishlist: state.wishlist,
-      passed: state.passed, activeTest: state.activeTest
+      passed: state.passed, layers: state.layers, activeTest: state.activeTest
     }
   };
   const blob = new Blob([JSON.stringify(bundle, null, 2)], { type: 'application/json' });
@@ -2389,6 +2554,7 @@ function handleImportFile(file) {
     if (!ok) { renderActiveTab(); return; }
     state.collection = bundle.data.collection; state.entries = bundle.data.entries;
     state.wishlist = bundle.data.wishlist; state.passed = bundle.data.passed || [];
+    state.layers = bundle.data.layers || [];
     state.activeTest = bundle.data.activeTest || null;
     persist();
     localStorage.setItem(KEYS.meta, JSON.stringify({ schemaVersion: SCHEMA_VERSION }));
@@ -2596,6 +2762,7 @@ function render_Data() {
           <div class="stat-row"><div class="stat-label">Bottles on the shelf</div><div class="stat-value">${state.collection.filter(c => !c.isSample).length}</div></div>
           <div class="stat-row"><div class="stat-label">Samples</div><div class="stat-value">${state.collection.filter(c => c.isSample).length}</div></div>
           <div class="stat-row"><div class="stat-label">Tests logged</div><div class="stat-value">${state.entries.length}</div></div>
+          <div class="stat-row"><div class="stat-label">Layering combos</div><div class="stat-value">${state.layers.length}</div></div>
           <div class="stat-row"><div class="stat-label">Wishlist</div><div class="stat-value">${state.wishlist.length}</div></div>
           <div class="stat-row"><div class="stat-label">Passed on</div><div class="stat-value">${state.passed.length}</div></div>
           <div class="stat-row"><div class="stat-label">Verified library entries</div><div class="stat-value">${Object.keys(BUILTIN_LIBRARY).length}</div></div>
@@ -2674,7 +2841,8 @@ function renderTabContent() {
 
 function renderActiveTab() {
   const active = document.activeElement;
-  const preserveIds = ['searchInput', 'testNameInput', 'shelfNameInput', 'wishInput', 'sampleNameInput', 'testTempInput', 'testRhInput'];
+  const preserveIds = ['searchInput', 'testNameInput', 'shelfNameInput', 'wishInput', 'sampleNameInput', 'testTempInput', 'testRhInput',
+    'layerName0', 'layerName1', 'layerName2', 'layerName3', 'layerName4'];
   const preserveId = active && active.id && preserveIds.includes(active.id) ? active.id : null;
   const selStart = preserveId && 'selectionStart' in active ? active.selectionStart : null;
   renderTabContent();
@@ -2739,6 +2907,7 @@ function finishActiveTest() {
     site: at.site || '', longevity: bandFromHours(hours), hours,
     tempC: at.tempC != null ? at.tempC : null, rh: at.rh != null ? at.rh : null,
     weatherSource: at.tempC != null ? (at.weatherSource || null) : null,
+    seasons: [], occasions: [],
     dry: parts.join('. ')
   };
   state.entries.push(entry);
@@ -2826,8 +2995,30 @@ function wireEvents() {
     if (remEntry) { removeWithUndo('entries', remEntry.getAttribute('data-remove-entry'), remEntry.getAttribute('data-label')); return; }
 
     const editEntryBtn = t.closest('[data-edit-entry]');
-    if (editEntryBtn) { state.editingEntry = editEntryBtn.getAttribute('data-edit-entry'); renderActiveTab(); return; }
-    if (t.closest('[data-cancel-entry]')) { state.editingEntry = null; renderActiveTab(); return; }
+    if (editEntryBtn) {
+      const id = editEntryBtn.getAttribute('data-edit-entry');
+      const item = state.entries.find(x => x.id === id);
+      state.editingEntry = id;
+      state.entryDraft = { seasons: (item && item.seasons || []).slice(), occasions: (item && item.occasions || []).slice() };
+      renderActiveTab(); return;
+    }
+    if (t.closest('[data-cancel-entry]')) { state.editingEntry = null; state.entryDraft = null; renderActiveTab(); return; }
+    const editEntrySeason = t.closest('[data-edit-entry-season]');
+    if (editEntrySeason && state.entryDraft) {
+      const k = editEntrySeason.getAttribute('data-edit-entry-season');
+      const s = state.entryDraft.seasons;
+      const i = s.indexOf(k);
+      if (i >= 0) s.splice(i, 1); else s.push(k);
+      renderActiveTab(); return;
+    }
+    const editEntryOccasion = t.closest('[data-edit-entry-occasion]');
+    if (editEntryOccasion && state.entryDraft) {
+      const k = editEntryOccasion.getAttribute('data-edit-entry-occasion');
+      const o = state.entryDraft.occasions;
+      const i = o.indexOf(k);
+      if (i >= 0) o.splice(i, 1); else o.push(k);
+      renderActiveTab(); return;
+    }
     const saveEntryBtn = t.closest('[data-save-entry]');
     if (saveEntryBtn) {
       const id = saveEntryBtn.getAttribute('data-save-entry');
@@ -2843,10 +3034,23 @@ function wireEvents() {
         item.tempC = tc === '' ? null : Number(tc);
         item.rh = rh === '' ? null : Number(rh);
         item.weatherSource = null;
+        item.seasons = state.entryDraft ? state.entryDraft.seasons : (item.seasons || []);
+        item.occasions = state.entryDraft ? state.entryDraft.occasions : (item.occasions || []);
         item.dry = g('editDry').value.trim();
         persist();
       }
-      state.editingEntry = null;
+      state.editingEntry = null; state.entryDraft = null;
+      renderActiveTab(); return;
+    }
+
+    const testFiltersToggle = t.closest('#testFiltersToggle');
+    if (testFiltersToggle) { state.testFiltersOpen = !state.testFiltersOpen; renderActiveTab(); return; }
+    const testSeasonBtn = t.closest('[data-test-season]');
+    if (testSeasonBtn) { state.testSeasonFilter = testSeasonBtn.getAttribute('data-test-season'); renderActiveTab(); return; }
+    const testFiltersClear = t.closest('#testFiltersClear');
+    if (testFiltersClear) {
+      state.testFamilyFilter = 'all'; state.testSeasonFilter = 'all';
+      state.testDateFrom = ''; state.testDateTo = ''; state.testSort = 'date';
       renderActiveTab(); return;
     }
 
@@ -3000,6 +3204,23 @@ function wireEvents() {
     if (testWish) { state.testName = testWish.getAttribute('data-test-wish'); switchTab('test'); return; }
     const remWish = t.closest('[data-remove-wishlist]');
     if (remWish) { removeWithUndo('wishlist', remWish.getAttribute('data-remove-wishlist'), remWish.getAttribute('data-label')); return; }
+    const editWishBtn = t.closest('[data-edit-wish]');
+    if (editWishBtn) { state.editingWish = editWishBtn.getAttribute('data-edit-wish'); renderActiveTab(); return; }
+    if (t.closest('[data-cancel-wish]')) { state.editingWish = null; renderActiveTab(); return; }
+    const saveWishBtn = t.closest('[data-save-wish]');
+    if (saveWishBtn) {
+      const id = saveWishBtn.getAttribute('data-save-wish');
+      const item = state.wishlist.find(x => x.id === id);
+      if (item) {
+        const nameEl = document.getElementById('editWishName'), noteEl = document.getElementById('editWishNote');
+        const name = nameEl ? nameEl.value.trim() : item.name;
+        if (name) item.name = name;
+        item.note = noteEl ? noteEl.value.trim() : item.note;
+        persist();
+      }
+      state.editingWish = null;
+      renderActiveTab(); renderHeader(); return;
+    }
     if (t.closest('#wishAddBtn')) {
       const el = document.getElementById('wishInput');
       const name = el ? el.value.trim() : '';
@@ -3007,6 +3228,60 @@ function wireEvents() {
       state.wishlist.push({ id: newId('w'), name, house: '', note: '' });
       state.wishDraft = ''; state.acOpenFor = null; persist(); renderActiveTab(); renderHeader(); return;
     }
+
+    if (t.closest('#addLayerSlot')) {
+      if (state.layerNames.length < 5) state.layerNames.push('');
+      renderActiveTab(); return;
+    }
+    const remLayerSlot = t.closest('[data-remove-layer-slot]');
+    if (remLayerSlot) {
+      const idx = Number(remLayerSlot.getAttribute('data-remove-layer-slot'));
+      if (state.layerNames.length > 2) state.layerNames.splice(idx, 1);
+      renderActiveTab(); return;
+    }
+    const setLayerRating = t.closest('[data-set-layer-rating]');
+    if (setLayerRating) { state.layerRating = Number(setLayerRating.getAttribute('data-set-layer-rating')); renderActiveTab(); return; }
+    if (t.closest('#saveLayerBtn')) {
+      const names = state.layerNames.map(n => n.trim()).filter(Boolean);
+      if (names.length < 2) { showToast('Log at least two fragrances', null); return; }
+      const refs = names.map(n => {
+        const m = state.collection.find(c => c.name.toLowerCase() === n.toLowerCase());
+        return m ? m.id : null;
+      });
+      state.layers.push({ id: newId('l'), names, refs, rating: state.layerRating, notes: state.layerNotes.trim(), date: todayISO() });
+      state.layerNames = ['', '']; state.layerRating = 5; state.layerNotes = ''; state.acOpenFor = null;
+      persist(); renderActiveTab(); renderHeader(); return;
+    }
+
+    const editLayerBtn = t.closest('[data-edit-layer]');
+    if (editLayerBtn) {
+      const id = editLayerBtn.getAttribute('data-edit-layer');
+      const item = state.layers.find(x => x.id === id);
+      state.editingLayer = id;
+      state.layerEditDraft = { rating: item ? item.rating : 5, notes: item ? (item.notes || '') : '' };
+      renderActiveTab(); return;
+    }
+    if (t.closest('[data-cancel-layer-edit]')) { state.editingLayer = null; state.layerEditDraft = null; renderActiveTab(); return; }
+    const setLayerEditRating = t.closest('[data-set-layer-edit-rating]');
+    if (setLayerEditRating && state.layerEditDraft) {
+      state.layerEditDraft.rating = Number(setLayerEditRating.getAttribute('data-set-layer-edit-rating'));
+      renderActiveTab(); return;
+    }
+    const saveLayerEditBtn = t.closest('[data-save-layer-edit]');
+    if (saveLayerEditBtn) {
+      const id = saveLayerEditBtn.getAttribute('data-save-layer-edit');
+      const item = state.layers.find(x => x.id === id);
+      if (item && state.layerEditDraft) {
+        const notesEl = document.getElementById('layerEditNotes');
+        item.rating = state.layerEditDraft.rating;
+        item.notes = notesEl ? notesEl.value.trim() : state.layerEditDraft.notes;
+        persist();
+      }
+      state.editingLayer = null; state.layerEditDraft = null;
+      renderActiveTab(); return;
+    }
+    const remLayer = t.closest('[data-remove-layer]');
+    if (remLayer) { removeWithUndo('layers', remLayer.getAttribute('data-remove-layer'), remLayer.getAttribute('data-label')); return; }
 
     const remPassed = t.closest('[data-remove-passed]');
     if (remPassed) { removeWithUndo('passed', remPassed.getAttribute('data-remove-passed'), remPassed.getAttribute('data-label')); return; }
@@ -3036,6 +3311,10 @@ function wireEvents() {
         item.decideBy = dateEl && dateEl.value ? dateEl.value : null;
         state.collection.push(item);
         state.sampleDraft = ''; persist(); renderActiveTab(); renderHeader();
+      } else if (forId.indexOf('layerName') === 0) {
+        const idx = Number(forId.slice('layerName'.length));
+        state.layerNames[idx] = name;
+        renderActiveTab();
       }
       return;
     }
@@ -3073,6 +3352,12 @@ function wireEvents() {
     else if (id === 'sampleNameInput') { state.sampleDraft = e.target.value; state.acOpenFor = 'sampleNameInput'; renderActiveTab(); }
     else if (id === 'sampleDecideByInput') { state.sampleDecideByDraft = e.target.value; }
     else if (id === 'passNameInput') { state.passDraft = e.target.value; }
+    else if (id.indexOf('layerName') === 0) {
+      const idx = Number(id.slice('layerName'.length));
+      state.layerNames[idx] = e.target.value; state.acOpenFor = id; renderActiveTab();
+    }
+    else if (id === 'layerNotesInput') { state.layerNotes = e.target.value; }
+    else if (id === 'layerEditNotes' && state.layerEditDraft) { state.layerEditDraft.notes = e.target.value; }
   });
   document.addEventListener('change', (e) => {
     if (e.target.id === 'importFile') {
@@ -3087,6 +3372,14 @@ function wireEvents() {
     } else if (e.target.hasAttribute('data-set-sample-decideby')) {
       const item = state.collection.find(c => c.id === e.target.getAttribute('data-set-sample-decideby'));
       if (item) { item.decideBy = e.target.value || null; persist(); renderActiveTab(); }
+    } else if (e.target.id === 'testFamilySelect') {
+      state.testFamilyFilter = e.target.value; renderActiveTab();
+    } else if (e.target.id === 'testSortSelect') {
+      state.testSort = e.target.value; renderActiveTab();
+    } else if (e.target.id === 'testDateFromInput') {
+      state.testDateFrom = e.target.value; renderActiveTab();
+    } else if (e.target.id === 'testDateToInput') {
+      state.testDateTo = e.target.value; renderActiveTab();
     }
   });
 }
