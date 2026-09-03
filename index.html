@@ -2116,7 +2116,11 @@ function render_Shelf() {
 // ---- Insights tab: profile, longevity by weather, recommended ----
 function render_Profile() {
   const prof = buildProfile();
-  const hasProfile = prof.signalBottles >= 1 && prof.likes.length > 0;
+  // Either side carries signal on its own — a bottle rated below 4 with
+  // nothing rated above 6 yet is a real profile (avoids only), not "no
+  // profile". Gating on likes.length alone hid a correctly-computed avoids
+  // list behind the generic empty state whenever nothing had been liked yet.
+  const hasProfile = prof.signalBottles >= 1 && (prof.likes.length > 0 || prof.avoids.length > 0);
   const maxLike = prof.likes.length ? prof.likes[0].w : 1;
   const maxAvoid = prof.avoids.length ? Math.abs(prof.avoids[0].w) : 1;
   const likeWeights = prof.likes.map(x => x.w);
@@ -2127,7 +2131,9 @@ function render_Profile() {
   if (!hasProfile) {
     body = `<div style="font-size:12.5px;color:var(--soft);line-height:1.5">Rate at least two bottles above 7 or below 4 to build a profile. Anything from 4 to 6 counts as no signal, so it stays out.</div>`;
   } else {
-    const likesBlock = hasSpread
+    const likesBlock = !prof.likes.length
+      ? `<div style="font-size:11.5px;color:var(--soft);line-height:1.5">Nothing rated above 6 yet, so there is no positive signal. Rate a bottle you love above 7 and this fills in.</div>`
+      : hasSpread
       ? `<div style="display:flex;flex-direction:column;gap:8px">
           ${prof.likes.map(n => `<div class="bar-row"><div class="bar-note">${esc(titleCaseNote(n.note))}</div><div class="bar-track"><div class="bar-fill" style="width:${Math.round((n.w / maxLike) * 100)}%;background:var(--gold)"></div></div><div class="bar-meta">+${n.w} · ${n.bottles.length}b</div></div>`).join('')}
         </div>`

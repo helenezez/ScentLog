@@ -632,3 +632,26 @@ library's, so the override is unambiguous); a bottle with no tests
 shows "library" and the library's stated value; cost-per-wear no
 longer renders on the collapsed card and does render in the expanded
 detail. Screenshots confirm both states in both color schemes.
+
+## Fix: rating a bottle below 4 with nothing liked yet hid the avoids
+
+`buildProfile()` was computing `avoids` correctly the whole time — the
+bug was purely in `render_Profile()`'s gate: `hasProfile = signalBottles
+>= 1 && likes.length > 0` required at least one *liked* bottle to exist
+before rendering any profile content at all, avoids included. Rate a
+single bottle below 4 with nothing yet rated above 6, and the real,
+correctly-computed avoids list sat behind the generic "rate two
+bottles" placeholder instead of showing.
+
+Changed the gate to `signalBottles >= 1 && (likes.length > 0 ||
+avoids.length > 0)` — either side is a real profile on its own — and
+gave "You gravitate toward" a matching empty state ("Nothing rated
+above 6 yet...") for the mirror case, instead of falling through to
+text that assumed at least one like existed.
+
+Verified with Playwright: a single bottle rated 2/10 (nothing liked)
+now shows "You tend to avoid" with its real notes and the correct
+empty state on the likes side; the reverse (liked-only) and
+both-present cases were re-checked to confirm neither regressed.
+Screenshot confirms the avoids-only state renders correctly in dark
+mode.
