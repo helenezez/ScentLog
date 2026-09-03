@@ -1232,6 +1232,7 @@ let state = {
   editingEntry: null,
   acOpenFor: null,
   testName: '', testTemp: '', testRh: '',
+  testWeatherSource: null, weatherFetch: { status: 'idle', message: '' },
   wishDraft: '', shelfDraft: '', passDraft: '', passReason: PASS_REASONS[0],
   sampleDraft: '', sampleDecideByDraft: '',
   toast: null, undoSnapshot: null, importErr: '', libraryImportMsg: null
@@ -1596,6 +1597,53 @@ function checkpointRows() {
   });
 }
 
+// PRD 5.1: capture real temperature/humidity via the Geolocation API plus a
+// free weather endpoint (Open-Meteo — no key, CORS-enabled, no paid tier
+// needed for this volume), rather than trusting a hand-typed guess, since
+// longevity readings aren't comparable across conditions. This is the one
+// deliberate exception to the app's "must work fully offline" rule (PRD 6):
+// every failure mode (no geolocation support, denied permission, timeout,
+// network/API failure) falls back to manual entry with a visible message,
+// never a silent stall or a crash.
+function fetchWeatherFromLocation() {
+  if (!('geolocation' in navigator)) {
+    state.weatherFetch = { status: 'error', message: 'Location is not available here. Enter temperature and humidity yourself.' };
+    renderActiveTab();
+    return;
+  }
+  state.weatherFetch = { status: 'loading', message: '' };
+  renderActiveTab();
+  navigator.geolocation.getCurrentPosition(
+    (pos) => {
+      const { latitude, longitude } = pos.coords;
+      const url = 'https://api.open-meteo.com/v1/forecast?latitude=' + latitude + '&longitude=' + longitude + '&current=temperature_2m,relative_humidity_2m';
+      fetch(url)
+        .then(r => { if (!r.ok) throw new Error('weather service error'); return r.json(); })
+        .then(data => {
+          const c = data && data.current;
+          if (!c || c.temperature_2m == null) throw new Error('no data in response');
+          state.testTemp = String(Math.round(c.temperature_2m * 10) / 10);
+          state.testRh = c.relative_humidity_2m != null ? String(Math.round(c.relative_humidity_2m)) : '';
+          state.testWeatherSource = 'auto';
+          state.weatherFetch = { status: 'success', message: '' };
+          renderActiveTab();
+        })
+        .catch(() => {
+          state.weatherFetch = { status: 'error', message: "Couldn't reach the weather service. Enter temperature and humidity yourself." };
+          renderActiveTab();
+        });
+    },
+    (err) => {
+      const message = err && err.code === 1
+        ? 'Location access denied. Enter temperature and humidity yourself.'
+        : "Couldn't get your location. Enter temperature and humidity yourself.";
+      state.weatherFetch = { status: 'error', message };
+      renderActiveTab();
+    },
+    { timeout: 8000 }
+  );
+}
+
 function renderLiveTestCard() {
   const at = state.activeTest;
   if (!at) {
@@ -1621,10 +1669,16 @@ function renderLiveTestCard() {
             <div style="font-size:10.5px;color:var(--faint);flex:1 1 auto;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(s.house || '')}</div>
           </div>`).join('')}
         </div>` : ''}
+        <div class="row-flex" style="align-items:center">
+          <div style="font-size:10.5px;color:var(--faint);flex:1 1 auto">Weather at test time (optional)</div>
+          <button id="weatherFetchBtn" type="button" style="flex:0 0 auto;padding:6px 10px;font-size:10.5px;font-weight:650;border:1px solid var(--line);background:transparent;color:var(--sage)" ${state.weatherFetch.status === 'loading' ? 'disabled' : ''}>${state.weatherFetch.status === 'loading' ? 'Getting weather…' : 'Use my location'}</button>
+        </div>
         <div class="row-flex">
           <div class="f1"><input id="testTempInput" value="${esc(state.testTemp)}" placeholder="Temp C (optional)" inputmode="numeric"></div>
           <div class="f1"><input id="testRhInput" value="${esc(state.testRh)}" placeholder="Humidity % (optional)" inputmode="numeric"></div>
         </div>
+        ${state.testWeatherSource === 'auto' ? `<div style="font-size:10.5px;color:var(--sage)">From your location just now. Edit either field to enter it yourself instead.</div>` : ''}
+        ${state.weatherFetch.status === 'error' ? `<div style="font-size:10.5px;color:var(--danger)">${esc(state.weatherFetch.message)}</div>` : ''}
         <button class="btn-primary" id="startTestBtn">Start the clock</button>
         <div style="font-size:10.5px;color:var(--faint);line-height:1.4">Checkpoints at 30 minutes, 2 hours, and 6 hours. Miss one and it waits for you, marked overdue.</div>
       </div>
@@ -1634,7 +1688,7 @@ function renderLiveTestCard() {
   const now = Date.now();
   const elapsedH = ((now - at.startedAt) / 3600000).toFixed(1);
   const ctxParts = [at.site].filter(Boolean);
-  if (at.tempC != null) ctxParts.push(at.tempC + 'C, ' + (at.rh != null ? at.rh + '% humidity' : ''));
+  if (at.tempC != null) ctxParts.push(at.tempC + 'C, ' + (at.rh != null ? at.rh + '% humidity' : '') + (at.weatherSource === 'auto' ? ' · from location' : ''));
   return `
     <div class="card">
       <div style="padding:13px 14px;display:flex;flex-direction:column;gap:3px;border-bottom:1px solid var(--line)">
@@ -1724,7 +1778,7 @@ function renderTestedLog() {
           <div class="entry-meta">
             <div style="font-weight:650;color:${bandColor(e.longevity)}">${esc(LONG_SHORT[e.longevity] || e.longevity)}${e.hours != null ? ' · ' + e.hours + 'h' : ''}</div>
             <div class="entry-dot"></div>
-            <div style="font-variant-numeric:tabular-nums">${e.tempC != null ? e.tempC + 'C / ' + (e.rh != null ? e.rh + '%' : '—') : '—'}</div>
+            <div style="font-variant-numeric:tabular-nums">${e.tempC != null ? e.tempC + 'C / ' + (e.rh != null ? e.rh + '%' : '—') : '—'}${e.tempC != null && e.weatherSource === 'auto' ? ` <span class="long-source-tag observed">gps</span>` : ''}</div>
             <div class="entry-dot"></div>
             <div>${esc(e.site || '—')}</div>
           </div>
@@ -2175,6 +2229,38 @@ function render_Profile() {
   `;
 }
 
+// PRD 5.1's aggregate chart (below) already covers "longevity varies by
+// temperature" across everything logged; this covers the per-fragrance half
+// of the same requirement ("note when a fragrance's longevity varies
+// meaningfully by temperature band") by running the same band comparison
+// per bottle instead of across the whole Tested log. Requires at least 2
+// tests in both the cool and hot bands per fragrance before claiming a
+// difference, same bar the aggregate insight already holds itself to.
+function fragranceWeatherNotes() {
+  const byRef = {};
+  state.entries.forEach(e => {
+    if (e.hours == null || e.tempC == null) return;
+    const key = e.ref || e.name;
+    if (!byRef[key]) byRef[key] = { name: e.name, entries: [] };
+    byRef[key].entries.push(e);
+  });
+  const notes = [];
+  Object.values(byRef).forEach(g => {
+    const bands = tempBandsFor(g.entries);
+    const cool = bands[0], hot = bands[2];
+    if (cool.avg == null || hot.avg == null || cool.n < 2 || hot.n < 2) return;
+    const diff = cool.avg - hot.avg;
+    if (Math.abs(diff) <= 1) return;
+    notes.push({
+      name: g.name, diff,
+      text: diff > 0
+        ? g.name + ' runs about ' + diff.toFixed(1) + 'h shorter above 28C than below 22C.'
+        : g.name + ' lasts about ' + Math.abs(diff).toFixed(1) + 'h longer above 28C than below 22C — unusual, worth a second look at the readings.'
+    });
+  });
+  return notes.sort((a, b) => Math.abs(b.diff) - Math.abs(a.diff)).slice(0, 5);
+}
+
 function render_WeatherChart() {
   const bands = tempBandsFor(state.entries);
   const withData = bands.filter(b => b.avg !== null);
@@ -2193,6 +2279,7 @@ function render_WeatherChart() {
     }
   }
   const bandColor = b => b.avg >= maxAvg * 0.85 ? 'var(--sage)' : b.avg >= maxAvg * 0.6 ? 'var(--gold)' : 'var(--wine)';
+  const perFragrance = fragranceWeatherNotes();
   return `
     <div>
       ${sectionHeader({ glyph: GLYPH.weather, title: 'Longevity by weather', sub: 'Readings taken in different heat are not comparable', tint: 'var(--sage)', count: state.entries.length ? state.entries.filter(e => e.tempC != null).length + ' with weather' : '' })}
@@ -2207,6 +2294,12 @@ function render_WeatherChart() {
             `).join('')}
           </div>
           <div style="font-size:12px;color:var(--soft);line-height:1.5;padding-top:2px;border-top:1px solid var(--hair)">${esc(insight)}</div>
+          ${perFragrance.length ? `
+            <div style="display:flex;flex-direction:column;gap:6px;padding-top:8px;border-top:1px solid var(--hair)">
+              <div style="font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;color:var(--faint)">By fragrance</div>
+              ${perFragrance.map(n => `<div style="font-size:11.5px;color:var(--ink);line-height:1.5">${esc(n.text)}</div>`).join('')}
+            </div>
+          ` : ''}
         ` : `<div style="font-size:12.5px;color:var(--soft);line-height:1.5">Log a few tests with a temperature reading and this chart fills in.</div>`}
       </div>
     </div>
@@ -2581,7 +2674,7 @@ function renderTabContent() {
 
 function renderActiveTab() {
   const active = document.activeElement;
-  const preserveIds = ['searchInput', 'testNameInput', 'shelfNameInput', 'wishInput', 'sampleNameInput'];
+  const preserveIds = ['searchInput', 'testNameInput', 'shelfNameInput', 'wishInput', 'sampleNameInput', 'testTempInput', 'testRhInput'];
   const preserveId = active && active.id && preserveIds.includes(active.id) ? active.id : null;
   const selStart = preserveId && 'selectionStart' in active ? active.selectionStart : null;
   renderTabContent();
@@ -2645,6 +2738,7 @@ function finishActiveTest() {
     id: newId('e'), ref: at.ref || null, name: at.name, date: todayISO(),
     site: at.site || '', longevity: bandFromHours(hours), hours,
     tempC: at.tempC != null ? at.tempC : null, rh: at.rh != null ? at.rh : null,
+    weatherSource: at.tempC != null ? (at.weatherSource || null) : null,
     dry: parts.join('. ')
   };
   state.entries.push(entry);
@@ -2698,6 +2792,8 @@ function wireEvents() {
 
     if (t.closest('#finishTestBtn')) { finishActiveTest(); return; }
 
+    if (t.closest('#weatherFetchBtn')) { fetchWeatherFromLocation(); return; }
+
     if (t.closest('#startTestBtn')) {
       const nameEl = document.getElementById('testNameInput');
       const name = nameEl ? nameEl.value.trim() : '';
@@ -2709,9 +2805,11 @@ function wireEvents() {
       state.activeTest = {
         ref: match ? match.id : null, name, startedAt: Date.now(), site: '',
         tempC: isNaN(tempC) ? null : tempC, rh: isNaN(rh) ? null : rh,
+        weatherSource: (!isNaN(tempC) && tempC !== null) ? state.testWeatherSource : null,
         cps: { 0: '', 30: '', 120: '', 360: '' }
       };
       state.testName = ''; state.testTemp = ''; state.testRh = '';
+      state.testWeatherSource = null; state.weatherFetch = { status: 'idle', message: '' };
       persist(); renderActiveTab(); renderHeader();
       ensureNotificationPermission().then(status => {
         notifyDeniedOnce(status);
@@ -2744,6 +2842,7 @@ function wireEvents() {
         const tc = g('editTempC').value.trim(), rh = g('editRh').value.trim();
         item.tempC = tc === '' ? null : Number(tc);
         item.rh = rh === '' ? null : Number(rh);
+        item.weatherSource = null;
         item.dry = g('editDry').value.trim();
         persist();
       }
@@ -2966,8 +3065,8 @@ function wireEvents() {
     const id = e.target.id;
     if (id === 'searchInput') { state.search = e.target.value; renderActiveTab(); }
     else if (id === 'testNameInput') { state.testName = e.target.value; renderActiveTab(); }
-    else if (id === 'testTempInput') { state.testTemp = e.target.value; }
-    else if (id === 'testRhInput') { state.testRh = e.target.value; }
+    else if (id === 'testTempInput') { state.testTemp = e.target.value; state.testWeatherSource = null; renderActiveTab(); }
+    else if (id === 'testRhInput') { state.testRh = e.target.value; state.testWeatherSource = null; renderActiveTab(); }
     else if (id === 'cpDraftInput') { state.cpDraft = e.target.value; }
     else if (id === 'shelfNameInput') { state.shelfDraft = e.target.value; state.acOpenFor = 'shelfNameInput'; renderActiveTab(); }
     else if (id === 'wishInput') { state.wishDraft = e.target.value; state.acOpenFor = 'wishInput'; renderActiveTab(); }

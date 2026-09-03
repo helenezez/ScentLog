@@ -655,3 +655,56 @@ empty state on the likes side; the reverse (liked-only) and
 both-present cases were re-checked to confirm neither regressed.
 Screenshot confirms the avoids-only state renders correctly in dark
 mode.
+
+## Phase 5.1 — weather
+
+Implements PRD 5.1 in full. This is the one deliberate exception to
+the app's "must work fully offline" rule (PRD §6), so every failure
+mode falls back to manual entry rather than blocking anything.
+
+**Capture.** A "Use my location" button next to the temp/humidity
+fields on the live-test start screen calls the Geolocation API, then
+fetches current conditions from Open-Meteo
+(`api.open-meteo.com/v1/forecast`) — chosen because it needs no API
+key, is CORS-enabled for direct browser calls, and has no paid tier to
+worry about at this volume, which matters for a single static HTML
+file with no backend to hide a key behind. Every failure mode
+degrades to manual entry with a visible message instead of a silent
+stall: no Geolocation support, denied permission, a timeout, or a
+network/API failure. A field the fetch filled shows "From your
+location just now" until the user edits either field by hand, at
+which point the attribution clears — editing after a fetch is always
+an active choice to override it, so the label needs to disappear
+immediately, not just internally; the temp/humidity inputs were added
+to the same live-re-render allowlist the search and name inputs
+already use so that happens without losing focus.
+
+**Store + display.** `weatherSource: 'auto' | null` travels with the
+active test through to the finished entry (cleared automatically if
+the entry's temperature is later hand-edited, same reasoning as
+above) and renders as a small "gps" tag next to the reading, both on
+the live test card and in the Tested log — the same source-tag
+pattern already established for observed-vs-library longevity.
+
+**Profile note, per fragrance.** The existing aggregate "Longevity by
+weather" chart only ever compared cool vs. hot across every logged
+test combined. PRD 5.1 also asks for this per fragrance ("note when
+*a fragrance's* longevity varies meaningfully by temperature band"),
+which the aggregate chart can't surface — a bottle's own swing can
+get diluted into the average. `fragranceWeatherNotes()` reuses the
+same `tempBandsFor()` band logic per bottle instead of across
+everything, holds itself to the same bar the aggregate insight
+already uses (at least 2 tests in both the cool and hot band before
+claiming a difference), and lists up to 5 fragrances with the largest
+swings under a "By fragrance" heading in the same card.
+
+Verified with Playwright, mocking both the Geolocation permission and
+the Open-Meteo response (route interception) so the test is
+deterministic regardless of the sandbox's own network access: a
+successful fetch fills both fields and carries `weatherSource: 'auto'`
+through to the finished entry and its Tested-log tag; hand-editing a
+fetched value clears the attribution live; a denied-permission context
+shows the fallback message without breaking manual entry; and a
+bottle with 2 cool + 2 hot logged tests produces the expected
+per-fragrance variance sentence. Screenshots confirm the fetch,
+active-test, error, and per-fragrance states in both color schemes.
