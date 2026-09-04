@@ -776,3 +776,43 @@ add form), the shelf-card surfacing line, and the wishlist edit form,
 all in both color schemes.
 
 This closes every phase in the PRD's roadmap (Phases 1 through 6).
+
+## Fix: iOS Safari auto-zoom on every input focus
+
+iOS Safari zooms the whole page in whenever a focused form field's
+font-size computes under 16px, and doesn't zoom back out on blur —
+the base `input, textarea, select` rule was `font-size: 12.5px`,
+so this fired on essentially every field in the app.
+
+Raised that rule to `font-size: 16px` and dropped vertical padding
+from `10px` to `8px` with `line-height: 1.3` to keep fields close to
+their previous visual height rather than shrinking the font back down
+to compensate, per the instruction to use padding/line-height as the
+lever, never font-size. Also found and fixed the one field with an
+inline override bypassing the shared rule — the per-sample decide-by
+date input on the Shelf tab's Samples section, which had its own
+`font-size: 11.5px` — down to matching padding/line-height for the
+same reason.
+
+Added `maximum-scale=1, user-scalable=no` to the viewport meta tag as
+the second half of the fix, so even a field that somehow computes
+under 16px in the future can't trigger a runaway zoom.
+
+Checked every input, select, and textarea in the app for stray
+font-size overrides before concluding the shared rule plus the one
+inline fix was complete coverage — not just the obvious name/search
+fields, but the autocomplete inputs (shelf/wishlist/sample/layering
+name fields), the checkpoint note textarea, every edit-sheet field
+(bottle, entry, wishlist, layering), the Tested log's new filter
+controls (family/season/date-range/sort), and the weather temp/
+humidity fields. Verified programmatically with Playwright — swept
+computed `font-size` across every form field on all four tabs, with
+edit sheets and the filters panel expanded — rather than trusting the
+CSS rule alone, since an inline style already once quietly bypassed
+it. Screenshots confirm the layout still holds at the larger size in
+the app's tightest multi-column rows (the bottle edit sheet's price/
+size/fill and purchase-date/batch-code rows) in both color schemes;
+a couple of longer placeholders (e.g. "Humidity % (optional)") now
+truncate a bit more in narrow fields, an acceptable, expected
+side effect of prioritizing the font-size fix over placeholder length,
+exactly as instructed.
