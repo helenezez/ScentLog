@@ -816,3 +816,57 @@ a couple of longer placeholders (e.g. "Humidity % (optional)") now
 truncate a bit more in narrow fields, an acceptable, expected
 side effect of prioritizing the font-size fix over placeholder length,
 exactly as instructed.
+
+## Want to try: tappable detail panel, shared with the shelf card
+
+Wishlist items now expand on tap to show house, concentration, family,
+longevity, and the full 0/30min/2hr/6hr checkpoint breakdown — the
+same information the shelf card shows, resolved from the verified
+library by name (`lookupLibrary()`), since a wishlist item has no
+bottle-owned data of its own to draw from.
+
+**Actual component reuse, not just matching styles.** Extracted the
+checkpoint-tiers/prose/empty-state block out of `render_Shelf_list()`
+into a standalone `renderNoteDetail(notes, prose, emptyMessage)` and
+changed the shelf card to call it too, so there is exactly one place
+that turns a notes/prose shape into that markup. Both the shelf card's
+existing behavior and the new wishlist behavior run through the same
+function; a future change to how that block renders only has one call
+site's worth of risk instead of two silently drifting apart. The
+identity line (house/conc/family) and longevity line reuse the same
+`shelf-meta`/`shelf-longevity`/`long-source-tag` CSS classes the shelf
+card already defines, for the same reason.
+
+**Interaction model changed to match the shelf card's.** Tapping a
+wishlist item's name/note previously opened the rename-and-note edit
+form directly (added in the 6.1 pass). That tap target now toggles
+the new detail panel instead — matching how tapping a shelf card
+expands it — and editing moved to an explicit "Edit" link inside the
+expanded panel, the same relationship the shelf card has between
+expanding and its own "Edit bottle" link. The existing remove (×) and
+"Test it" buttons on the collapsed row are unchanged.
+
+**Empty state, deliberately not byte-identical.** The shelf's empty
+message ends "...Add what you smell in Edit bottle below and it
+becomes yours" — accurate there because a bottle edit sheet with
+user-notes fields sits right below it. A wishlist item has no such
+edit sheet (its edit form only has name and note), so that clause
+would point at a feature that isn't there. Passed a wishlist-specific
+message into the same `renderNoteDetail()` that keeps the identical
+opening ("No verified notes for this one... Nothing gets filled in
+from a guess") and drops only the inapplicable trailing clause — same
+component, same anti-fabrication framing, accurate copy for the
+context it's actually shown in.
+
+Verified with Playwright: a library-matched item (Delina) expands to
+show real house/conc/family/longevity and the real note text pulled
+from the verified library, not placeholders; an unmatched item shows
+"No details on file," "No longevity data yet," and the adapted empty
+message; toggling expands and collapses correctly; the Edit link
+inside the expanded panel opens the rename form and a saved edit
+persists with the detail panel still open afterward; and — the
+regression check that actually matters here — the shelf card's own
+detail panel still renders its tiers, prose, and Edit bottle/Remove
+links correctly after being refactored to call the shared function.
+Screenshots confirm both the matched and unmatched states in both
+color schemes.

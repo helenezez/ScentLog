@@ -2093,6 +2093,33 @@ function renderBottleEditForm(c) {
   `;
 }
 
+// Shared checkpoint-detail component: the top/heart/base tiers plus the
+// 0/30min/2hr/6hr prose breakdown, or the anti-fabrication empty state when
+// neither exists. Built once so the shelf card and Want to try both render
+// exactly the same thing from the same notes/prose shape (LIBRARY entries
+// and collection items already share that shape) instead of drifting apart
+// as two hand-maintained copies.
+function renderNoteDetail(notes, prose, emptyMessage) {
+  const tiers = notes ? [
+    { label: 'Top', notes: (notes.top || []).map(titleCaseNote).join(', '), color: 'var(--gold)' },
+    { label: 'Heart', notes: (notes.heart || []).map(titleCaseNote).join(', '), color: 'var(--wine)' },
+    { label: 'Base', notes: (notes.base || []).map(titleCaseNote).join(', '), color: 'var(--sage)' }
+  ].filter(t => t.notes) : [];
+  const proseRows = prose ? [
+    { label: '0 min', text: prose.cp0 }, { label: '30 min', text: prose.cp30 },
+    { label: '2 hr', text: prose.cp2h }, { label: '6 hr', text: prose.cp6h }
+  ].filter(x => x.text) : [];
+  return `
+    ${tiers.length ? `<div style="display:flex;flex-direction:column;gap:8px">
+      ${tiers.map(t => `<div class="tier-row"><div class="tier-label" style="color:${t.color}">${t.label}</div><div class="tier-notes">${esc(t.notes)}</div></div>`).join('')}
+    </div>` : ''}
+    ${proseRows.length ? `<div style="display:flex;flex-direction:column;gap:6px;padding-top:${tiers.length ? '9px' : '0'};${tiers.length ? 'border-top:1px solid var(--hair)' : ''}">
+      ${proseRows.map(p => `<div class="tier-row"><div class="prose-label">${p.label}</div><div class="prose-text">${esc(p.text)}</div></div>`).join('')}
+    </div>` : ''}
+    ${!tiers.length && !proseRows.length ? `<div style="font-size:12px;color:var(--soft);line-height:1.5">${esc(emptyMessage)}</div>` : ''}
+  `;
+}
+
 function render_Shelf_list() {
   const sorted = state.collection.filter(c => !c.isSample).sort((a, b) => b.reach - a.reach);
   const wears = {};
@@ -2108,15 +2135,6 @@ function render_Shelf_list() {
     const layerNotes = layeringNotesFor(c);
     const isTop = i === 0;
     const expanded = !!state.expanded[c.id];
-    const tiers = c.notes ? [
-      { label: 'Top', notes: (c.notes.top || []).map(titleCaseNote).join(', '), color: 'var(--gold)' },
-      { label: 'Heart', notes: (c.notes.heart || []).map(titleCaseNote).join(', '), color: 'var(--wine)' },
-      { label: 'Base', notes: (c.notes.base || []).map(titleCaseNote).join(', '), color: 'var(--sage)' }
-    ].filter(t => t.notes) : [];
-    const prose = c.prose ? [
-      { label: '0 min', text: c.prose.cp0 }, { label: '30 min', text: c.prose.cp30 },
-      { label: '2 hr', text: c.prose.cp2h }, { label: '6 hr', text: c.prose.cp6h }
-    ].filter(x => x.text) : [];
     let segs = '';
     for (let v = 1; v <= 10; v++) {
       const on = v <= c.reach;
@@ -2151,15 +2169,7 @@ function render_Shelf_list() {
             <div class="shelf-cpw" style="color:${cpw ? 'var(--sage)' : 'var(--faint)'}">${cpw ? '$' + cpw.toFixed(0) + ' per wear · ' + w + ' logged' : (c.price ? 'No wears logged yet' : 'Add a price to see cost per wear')}</div>
             ${observed ? `<div style="font-size:11px;color:var(--soft);line-height:1.4">Longevity above is observed from ${observed.n} logged ${observed.n === 1 ? 'test' : 'tests'}, averaging ${observed.hours.toFixed(1)}h. The library states ${esc(c.longevity || 'no value')}.</div>` : ''}
             ${layerNotes.length ? `<div style="display:flex;flex-direction:column;gap:4px">${layerNotes.map(n => `<div style="font-size:11.5px;color:var(--sage);line-height:1.4">Layers well with ${esc(n.partners.join(' + ') || 'itself')} (rated ${n.rating}/10)${n.notes ? ': ' + esc(n.notes) : ''}</div>`).join('')}</div>` : ''}
-            ${tiers.length ? `<div style="display:flex;flex-direction:column;gap:8px">
-              ${tiers.map(t => `<div class="tier-row"><div class="tier-label" style="color:${t.color}">${t.label}</div><div class="tier-notes">${esc(t.notes)}</div></div>`).join('')}
-            </div>` : ''}
-            ${prose.length ? `<div style="display:flex;flex-direction:column;gap:6px;padding-top:${tiers.length ? '9px' : '0'};${tiers.length ? 'border-top:1px solid var(--hair)' : ''}">
-              ${prose.map(p => `<div class="tier-row"><div class="prose-label">${p.label}</div><div class="prose-text">${esc(p.text)}</div></div>`).join('')}
-            </div>` : ''}
-            ${!tiers.length && !prose.length ? `
-              <div style="font-size:12px;color:var(--soft);line-height:1.5">No verified notes for this one. Nothing gets filled in from a guess. Add what you smell in Edit bottle below and it becomes yours.</div>
-            ` : ''}
+            ${renderNoteDetail(c.notes, c.prose, 'No verified notes for this one. Nothing gets filled in from a guess. Add what you smell in Edit bottle below and it becomes yours.')}
             ${(c.seasons && c.seasons.length) || (c.occasions && c.occasions.length) ? `<div class="tag-row">${(c.seasons || []).concat(c.occasions || []).map(t => `<div class="tag">${esc(t)}</div>`).join('')}</div>` : ''}
             <div class="row-flex" style="gap:12px">
               <div class="link-action" data-edit-bottle="${c.id}">Edit bottle</div>
@@ -2269,7 +2279,9 @@ function render_WantToTry() {
     <div>
       ${sectionHeader({ glyph: GLYPH.wish, title: 'Want to try', sub: 'Sample these before you buy a full bottle', tint: 'var(--gold)', count: String(state.wishlist.length) })}
       <div style="display:flex;flex-direction:column;gap:8px">
-        ${state.wishlist.map(w => state.editingWish === w.id ? `
+        ${state.wishlist.map(w => {
+          if (state.editingWish === w.id) {
+            return `
           <div class="card card-pad" style="display:flex;flex-direction:column;gap:8px">
             <input id="editWishName" value="${esc(w.name)}" placeholder="Fragrance name">
             <input id="editWishNote" value="${esc(w.note || '')}" placeholder="Note, e.g. why you want to try it">
@@ -2278,16 +2290,38 @@ function render_WantToTry() {
               <button data-cancel-wish="1" style="padding:9px 14px">Cancel</button>
             </div>
           </div>
-        ` : `
+        `;
+          }
+          const expanded = !!state.expanded[w.id];
+          const lib = lookupLibrary(w.name);
+          const longevity = lib ? lib.longevity : '';
+          return `
+        <div style="display:flex;flex-direction:column;gap:6px">
           <div class="wish-item">
-            <div class="f1" data-edit-wish="${w.id}" style="cursor:pointer">
+            <div class="f1" data-toggle-wish="${w.id}" style="cursor:pointer">
               <div class="wish-name">${esc(w.name)}</div>
               <div class="wish-sub">${esc(w.note || houseFor(w.name, null) || 'No note yet')}</div>
             </div>
             <button class="wish-test-btn" data-test-wish="${esc(w.name)}">Test it</button>
             <button class="x-btn" data-remove-wishlist="${w.id}" data-label="${esc(w.name)}">&times;</button>
           </div>
-        `).join('')}
+          ${expanded ? `
+            <div class="card card-pad" style="display:flex;flex-direction:column;gap:8px">
+              <div class="shelf-meta">${esc([lib && lib.house, lib && lib.conc, lib && lib.family].filter(Boolean).join(' · ')) || 'No details on file'}</div>
+              <div class="shelf-longevity" style="color:${longevityColor(longevity)}">
+                ${longevity ? esc(longevity) : 'No longevity data yet'}
+                ${longevity ? `<span class="long-source-tag">library</span>` : ''}
+              </div>
+              <div class="hair"></div>
+              ${renderNoteDetail(lib && lib.notes, lib && lib.prose, 'No verified notes for this one yet. Nothing gets filled in from a guess.')}
+              <div class="row-flex" style="gap:12px">
+                <div class="link-action" data-edit-wish="${w.id}">Edit</div>
+              </div>
+            </div>
+          ` : ''}
+        </div>
+        `;
+        }).join('')}
         <div class="row-flex">
           <div class="ac-wrap f1">
             <input id="wishInput" value="${esc(state.wishDraft)}" placeholder="Add something you want to try" autocomplete="off">
@@ -3204,6 +3238,12 @@ function wireEvents() {
     if (testWish) { state.testName = testWish.getAttribute('data-test-wish'); switchTab('test'); return; }
     const remWish = t.closest('[data-remove-wishlist]');
     if (remWish) { removeWithUndo('wishlist', remWish.getAttribute('data-remove-wishlist'), remWish.getAttribute('data-label')); return; }
+    const wishToggle = t.closest('[data-toggle-wish]');
+    if (wishToggle) {
+      const id = wishToggle.getAttribute('data-toggle-wish');
+      state.expanded[id] = !state.expanded[id];
+      renderActiveTab(); return;
+    }
     const editWishBtn = t.closest('[data-edit-wish]');
     if (editWishBtn) { state.editingWish = editWishBtn.getAttribute('data-edit-wish'); renderActiveTab(); return; }
     if (t.closest('[data-cancel-wish]')) { state.editingWish = null; renderActiveTab(); return; }
